@@ -1,4 +1,7 @@
 import { z } from "zod";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 const portSchema = z.coerce.number().int().min(1).max(65535);
 

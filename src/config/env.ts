@@ -1,5 +1,5 @@
-import { z } from "zod";
 import * as dotenv from "dotenv";
+import { z } from "zod";
 
 dotenv.config();
 
@@ -20,7 +20,7 @@ const envSchema = z.object({
   MINIO_CONSOLE_PORT: portSchema,
   MINIO_ROOT_USER: z.string().min(1),
   MINIO_ROOT_PASSWORD: z.string().min(1),
-  MINIO_BUCKET_IMAGES: z.string().min(1)
+  MINIO_BUCKET_IMAGES: z.string().min(1),
 });
 
 export const env = envSchema.parse(process.env);

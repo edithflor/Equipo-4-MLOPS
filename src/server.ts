@@ -9,8 +9,8 @@ const server = createServer((_request, response) => {
     JSON.stringify({
       name: "equipo-4-mlops",
       status: "ok",
-      environment: env.NODE_ENV
-    })
+      environment: env.NODE_ENV,
+    }),
   );
 });
 

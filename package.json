@@ -8,6 +8,9 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "dev": "tsx src/server.ts",
+    "test": "npm run test:tdd && npm run test:gherkin",
+    "test:tdd": "tsx --test tests/tdd/app.test.ts",
+    "test:gherkin": "tsx tests/gherkin/run-gherkin.ts",
     "check": "biome check .",
     "format": "biome format --write ."
   },

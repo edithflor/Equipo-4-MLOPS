@@ -22,6 +22,13 @@ On-premise monolithic image annotation portal for the MLOps course project (COCO
 - **Infrastructure:** Docker / Docker Compose
 - **Quality:** Biome
 
+## Application Layers
+
+- **Presentation/UI boundary:** `src/presentation` contains HTTP-facing controllers.
+- **Logic:** `src/logic` contains application services and business rules.
+- **Data:** `src/data` contains repositories and data-source adapters.
+- **Composition root:** `src/app.ts` wires the layers together, while `src/server.ts` only starts the process.
+
 ## Setup (Clone-to-Run)
 
 Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com/).

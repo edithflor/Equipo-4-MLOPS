@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { type HealthResponse, createHealthResponse } from "../../src/app.js";
+import { createHealthRepository } from "../../src/data/healthRepository.js";
+import { type HealthResponse, createHealthService } from "../../src/logic/healthService.js";
 
 interface ScenarioContext {
   environment?: string;
@@ -24,7 +25,9 @@ const stepDefinitions: Array<[RegExp, StepHandler]> = [
         context.environment,
         "Expected environment to be defined before generating response",
       );
-      context.response = createHealthResponse(context.environment);
+      const healthRepository = createHealthRepository();
+      const healthService = createHealthService(healthRepository, context.environment);
+      context.response = healthService.getHealth();
     },
   ],
   [

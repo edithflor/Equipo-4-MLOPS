@@ -1,24 +1,10 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import { createHealthRepository } from "./data/healthRepository.js";
+import { createHealthService } from "./logic/healthService.js";
+import { createHealthController } from "./presentation/http/healthController.js";
 
-export type HealthStatus = "ok";
+export function createApp(environment: string) {
+  const healthRepository = createHealthRepository();
+  const healthService = createHealthService(healthRepository, environment);
 
-export interface HealthResponse {
-  name: "equipo-4-mlops";
-  status: HealthStatus;
-  environment: string;
-}
-
-export function createHealthResponse(environment: string): HealthResponse {
-  return {
-    name: "equipo-4-mlops",
-    status: "ok",
-    environment,
-  };
-}
-
-export function createRequestHandler(environment: string) {
-  return (_request: IncomingMessage, response: ServerResponse) => {
-    response.writeHead(200, { "content-type": "application/json" });
-    response.end(JSON.stringify(createHealthResponse(environment)));
-  };
+  return createHealthController(healthService);
 }

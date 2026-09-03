@@ -4,7 +4,7 @@ On-premise monolithic image annotation portal for the MLOps course project (COCO
 
 ## Status
 
-- Phase 1 & 2 repository setup: **In progress**.
+- Phase 1 & 2 repository setup: **Completed**.
 
 ## Repository Rules
 
@@ -16,7 +16,7 @@ On-premise monolithic image annotation portal for the MLOps course project (COCO
 ## Architecture & Stack
 
 - **Language:** TypeScript (Strict Mode)
-- **Backend & Validation:** Express.js + Zod 4
+- **Backend & Validation:** Express.js + Zod
 - **Database & ORM:** MariaDB + Drizzle ORM
 - **Storage:** MinIO (S3-compatible)
 - **Infrastructure:** Docker / Docker Compose
@@ -36,3 +36,4 @@ Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com
 1. **Configure environment:** 
    ```bash
    cp .env.example .env
+   

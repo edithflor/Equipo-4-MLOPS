@@ -1,25 +1,9 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      APP_PORT: ${APP_PORT}
-      PROD_APP_PORT: ${PROD_APP_PORT}
-      MARIADB_HOST: mariadb
-      MARIADB_PORT: ${MARIADB_PORT}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MINIO_ENDPOINT: minio
-      MINIO_API_PORT: ${MINIO_API_PORT}
-      MINIO_CONSOLE_PORT: ${MINIO_CONSOLE_PORT}
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_IMAGES: ${MINIO_BUCKET_IMAGES}
     ports:
-      - "${PROD_APP_PORT}:${PROD_APP_PORT}"
-      
+      - target: 3100
+        published: "${PROD_APP_PORT}"
+        protocol: tcp
+        mode: ingress
+    environment:
+      - NODE_ENV=production

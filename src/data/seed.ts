@@ -31,21 +31,21 @@ export async function runSeeder() {
 
   // URLs de imágenes reales y estables de prueba (acordes a MLOps / objetos)
   const mockImagesToFetch = [
-    { 
-      id: 1, 
-      objectKey: "seed-img-1.jpg", 
-      mime: "image/jpeg", 
-      width: 640, 
-      height: 480, 
-      url: "https://picsum.photos/id/64/640/480" // Foto de ejemplo (persona/entorno)
+    {
+      id: 1,
+      objectKey: "seed-img-1.jpg",
+      mime: "image/jpeg",
+      width: 640,
+      height: 480,
+      url: "https://picsum.photos/id/64/640/480", // Foto de ejemplo (persona/entorno)
     },
-    { 
-      id: 2, 
-      objectKey: "seed-img-2.jpg", 
-      mime: "image/jpeg", 
-      width: 640, 
-      height: 480, 
-      url: "https://picsum.photos/id/111/640/480" // Foto de ejemplo (vehículo/objeto)
+    {
+      id: 2,
+      objectKey: "seed-img-2.jpg",
+      mime: "image/jpeg",
+      width: 640,
+      height: 480,
+      url: "https://picsum.photos/id/111/640/480", // Foto de ejemplo (vehículo/objeto)
     },
   ];
 
@@ -74,7 +74,7 @@ export async function runSeeder() {
         mime,
         width,
         height,
-      }))
+      })),
     )
     .onDuplicateKeyUpdate({ set: { id: sql`id` } });
 

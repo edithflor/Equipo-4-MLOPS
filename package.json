@@ -16,7 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file=.env src/data/migrate.ts",
     "db:seed": "tsx --env-file=.env src/data/seed.ts",
-    "up": "docker compose up -d && npm run db:migrate && npm run db:seed && npm run dev"
+    "up": "docker compose up -d mariadb minio minio-init && npm run db:migrate && npm run db:seed && npm run dev"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

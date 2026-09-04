@@ -1,93 +1,45 @@
 import { Router } from "express";
-import {
-  createBbox,
-  deleteBbox,
-  listBboxes,
-  moveBbox,
-  resizeBbox,
-} from "../logic/bboxService";
+import { AnnotationRepository } from "../data/annotationRepository.js";
+import { BoundingBox } from "../logic/bboxService.js";
 
-const router = Router();
+export const annotationRoutes = Router();
+const repo = new AnnotationRepository();
 
-router.post(
-  "/images/:imageId/annotations",
-  async (req, res) => {
-    try {
-      const result =
-        await createBbox({
-          ...req.body,
-          imageId:
-            req.params.imageId,
-        });
+annotationRoutes.post("/", async (req, res) => {
+  try {
+    const box = new BoundingBox(req.body);
+    await repo.save(box.data);
+    res.status(201).json(box.data);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    res.status(400).json({ error: message });
+  }
+});
 
-      return res.status(201).json({
-        data: result,
-      });
-    } catch (error) {
-      return res.status(400).json({
-        code: "INVALID_ANNOTATION",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Anotación inválida.",
-      });
-    }
-  },
-);
+annotationRoutes.get("/image/:imageId", async (req, res) => {
+  try {
+    const boxes = await repo.getByImageId(req.params.imageId);
+    res.status(200).json(boxes);
+  } catch {
+    res.status(500).json({ error: "Error al recuperar anotaciones" });
+  }
+});
 
-router.get(
-  "/images/:imageId/annotations",
-  async (req, res) => {
-    const data =
-      await listBboxes(
-        req.params.imageId,
-      );
+annotationRoutes.put("/:id", async (req, res) => {
+  try {
+    const { x, y, width, height } = req.body;
+    await repo.updateGeometry(req.params.id, x, y, width, height);
+    res.status(200).json({ success: true, message: "Geometría actualizada" });
+  } catch {
+    res.status(500).json({ error: "Error al actualizar caja" });
+  }
+});
 
-    return res.json({ data });
-  },
-);
-
-router.patch(
-  "/annotations/:id/move",
-  async (req, res) => {
-    await moveBbox(
-      req.params.id,
-      req.body.x,
-      req.body.y,
-    );
-
-    return res
-      .status(204)
-      .send();
-  },
-);
-
-router.patch(
-  "/annotations/:id/resize",
-  async (req, res) => {
-    await resizeBbox(
-      req.params.id,
-      req.body.width,
-      req.body.height,
-    );
-
-    return res
-      .status(204)
-      .send();
-  },
-);
-
-router.delete(
-  "/annotations/:id",
-  async (req, res) => {
-    await deleteBbox(
-      req.params.id,
-    );
-
-    return res
-      .status(204)
-      .send();
-  },
-);
-
-export default router;
+annotationRoutes.delete("/:id", async (req, res) => {
+  try {
+    await repo.delete(req.params.id);
+    res.status(200).json({ success: true, message: "Caja eliminada" });
+  } catch {
+    res.status(500).json({ error: "Error al eliminar caja" });
+  }
+});

@@ -1,18 +1,13 @@
 import { Router } from "express";
-import { listCategories } from "../data/categoryRepository";
+import { listCategories } from "../data/categoryRepository.js";
 
-const router = Router();
+export const categoryRoutes = Router();
 
-router.get(
-  "/categories",
-  async (_req, res) => {
-    const data =
-      await listCategories();
-
-    return res.json({
-      data,
-    });
-  },
-);
-
-export default router;
+categoryRoutes.get("/", async (req, res) => {
+  try {
+    const categories = await listCategories();
+    res.status(200).json(categories);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener las categorías" });
+  }
+});

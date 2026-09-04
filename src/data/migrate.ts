@@ -1,39 +1,17 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import mysql from "mysql2/promise";
-import { env } from "../config/env";
+import { migrate } from "drizzle-orm/mysql2/migrator";
+import { db } from "./db.js";
 
-async function migrate(): Promise<void> {
-  const connection = await mysql.createConnection(env.DATABASE_URL);
-
+async function main() {
   try {
-    const migrationsDir = path.resolve("drizzle");
-
-    // En el proyecto real conviene usar el runner de migraciones de Drizzle.
-    // Este archivo centraliza el punto de entrada de migración.
-    const migrationFile = path.join(
-      migrationsDir,
-      "0000_initial.sql",
-    );
-
-    const sql = await readFile(migrationFile, "utf8");
-
-    const statements = sql
-      .split("--> statement-breakpoint")
-      .map((statement) => statement.trim())
-      .filter(Boolean);
-
-    for (const statement of statements) {
-      await connection.query(statement);
-    }
-
-    console.log("Migraciones aplicadas correctamente.");
-  } finally {
-    await connection.end();
+    console.log("Ejecutando migraciones...");
+    // Drizzle escanea automáticamente la carpeta out buscando archivos SQL
+    await migrate(db, { migrationsFolder: "./drizzle" });
+    console.log("Migraciones completadas con éxito.");
+    process.exit(0);
+  } catch (error) {
+    console.error("Error ejecutando migraciones:", error);
+    process.exit(1);
   }
 }
 
-migrate().catch((error) => {
-  console.error("Error ejecutando migraciones:", error);
-  process.exit(1);
-});
+main();

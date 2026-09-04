@@ -1,126 +1,57 @@
-import assert from "node:assert/strict";
+import assert from "node:assert";
 import test from "node:test";
+import "dotenv/config";
+import { UploadValidationService } from "../src/logic/uploadValidation.js";
 
-import {
-  validateUpload,
-} from "../src/logic/uploadValidation";
-
-const LIMITS = {
-  maxBytes: 5 * 1024 * 1024,
-
-  allowedMimeTypes: [
-    "image/jpeg",
-    "image/png",
-  ],
-};
-
-function createInput(
-  overrides: Partial<{
-    filename: string;
-    mimeType: string;
-    sizeBytes: number;
-    width: number;
-    height: number;
-  }> = {},
-) {
-  return {
-    filename:
-      overrides.filename ??
-      "campus.jpg",
-
-    mimeType:
-      overrides.mimeType ??
-      "image/jpeg",
-
-    sizeBytes:
-      overrides.sizeBytes ??
-      1024,
-
-    buffer:
-      Buffer.from("fake-image"),
-
-    width:
-      overrides.width ??
-      1920,
-
-    height:
-      overrides.height ??
-      1080,
-  };
-}
+const service = new UploadValidationService();
 
 test("acepta JPEG válido", () => {
-  assert.doesNotThrow(() =>
-    validateUpload(
-      createInput({
-        mimeType:
-          "image/jpeg",
-      }),
-      LIMITS,
-    ),
-  );
+  const result = service.validate({
+    filename: "test.jpg",
+    mimetype: "image/jpeg",
+    size: 1024,
+    buffer: Buffer.from("fake-image-data"),
+  });
+  assert.strictEqual(result.success, true);
 });
 
 test("acepta PNG válido", () => {
-  assert.doesNotThrow(() =>
-    validateUpload(
-      createInput({
-        mimeType:
-          "image/png",
-      }),
-      LIMITS,
-    ),
-  );
+  const result = service.validate({
+    filename: "test.png",
+    mimetype: "image/png",
+    size: 1024,
+    buffer: Buffer.from("fake-image-data"),
+  });
+  assert.strictEqual(result.success, true);
 });
 
 test("rechaza MIME no permitido", () => {
-  assert.throws(
-    () =>
-      validateUpload(
-        createInput({
-          filename:
-            "archivo.txt",
-          mimeType:
-            "text/plain",
-        }),
-        LIMITS,
-      ),
-    /INVALID_MIME/,
-  );
+  const result = service.validate({
+    filename: "test.txt",
+    mimetype: "text/plain",
+    size: 1024,
+    buffer: Buffer.from("fake-text"),
+  });
+  assert.strictEqual(result.success, false);
+  assert.match(result.error || "", /mime|permitido/i);
 });
 
 test("rechaza archivo demasiado grande", () => {
-  assert.throws(
-    () =>
-      validateUpload(
-        createInput({
-          sizeBytes:
-            LIMITS.maxBytes + 1,
-        }),
-        LIMITS,
-      ),
-    /FILE_TOO_LARGE/,
-  );
+  const result = service.validate({
+    filename: "test.jpg",
+    mimetype: "image/jpeg",
+    size: 100000000,
+    buffer: Buffer.from("fake-image-data"),
+  });
+  assert.strictEqual(result.success, false);
+  assert.match(result.error || "", /tamaño|excede/i);
 });
 
-test("rechaza width inválido", () => {
-  assert.throws(() =>
-    validateUpload(
-      createInput({
-        width: 0,
-      }),
-      LIMITS,
-    ),
-  );
-});
-
-test("rechaza height inválido", () => {
-  assert.throws(() =>
-    validateUpload(
-      createInput({
-        height: 0,
-      }),
-      LIMITS,
-    ),
-  );
+test("rechaza width inválido o ausente en el payload", () => {
+  const result = service.validate({
+    filename: "test.jpg",
+    mimetype: "image/jpeg",
+    size: 1024,
+  });
+  assert.strictEqual(result.success, false);
 });

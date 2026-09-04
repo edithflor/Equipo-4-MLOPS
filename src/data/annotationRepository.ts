@@ -1,49 +1,38 @@
+import crypto from "node:crypto";
 import { eq } from "drizzle-orm";
-import { db } from "./db";
-import { annotations } from "../db/schema";
+import type { BoundingBoxInput } from "../logic/bboxService.js";
+import { db } from "./db.js";
+import { bboxes } from "./schema.js";
 
-export type NewAnnotation = typeof annotations.$inferInsert;
+export class AnnotationRepository {
+  public async getByImageId(imageId: string): Promise<BoundingBoxInput[]> {
+    const records = await db.select().from(bboxes).where(eq(bboxes.imageId, imageId));
+    return records as BoundingBoxInput[];
+  }
 
-export async function createAnnotation(data: NewAnnotation) {
-  await db.insert(annotations).values(data);
-  return data;
-}
+  public async save(box: BoundingBoxInput): Promise<void> {
+    await db.insert(bboxes).values({
+      id: box.id ?? crypto.randomUUID(),
+      imageId: box.imageId,
+      categoryId: box.categoryId,
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+    });
+  }
 
-export async function findAnnotationById(id: string) {
-  const rows = await db
-    .select()
-    .from(annotations)
-    .where(eq(annotations.id, id))
-    .limit(1);
+  public async updateGeometry(
+    id: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): Promise<void> {
+    await db.update(bboxes).set({ x, y, width, height }).where(eq(bboxes.id, id));
+  }
 
-  return rows[0];
-}
-
-export async function listAnnotationsByImage(imageId: string) {
-  return db
-    .select()
-    .from(annotations)
-    .where(eq(annotations.imageId, imageId));
-}
-
-export async function updateAnnotation(
-  id: string,
-  values: Partial<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    area: number;
-  }>,
-) {
-  await db
-    .update(annotations)
-    .set(values)
-    .where(eq(annotations.id, id));
-}
-
-export async function removeAnnotation(id: string) {
-  await db
-    .delete(annotations)
-    .where(eq(annotations.id, id));
+  public async delete(id: string): Promise<void> {
+    await db.delete(bboxes).where(eq(bboxes.id, id));
+  }
 }

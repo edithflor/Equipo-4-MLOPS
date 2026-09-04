@@ -14,16 +14,14 @@ export type AnnotationAction =
     };
 
 export class AnnotationHistory {
-  private readonly stack: AnnotationAction[] =
-    [];
+  private readonly stack: AnnotationAction[] = [];
 
   push(action: AnnotationAction): void {
     this.stack.push(action);
   }
 
   async undo(): Promise<boolean> {
-    const action =
-      this.stack.pop();
+    const action = this.stack.pop();
 
     if (!action) {
       return false;

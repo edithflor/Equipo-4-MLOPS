@@ -49,10 +49,7 @@ test("bbox rechaza width menor o igual a cero", () => {
     height: 100,
   };
 
-  assert.throws(
-    () => validateBbox(bbox),
-    /INVALID_WIDTH/,
-  );
+  assert.throws(() => validateBbox(bbox), /INVALID_WIDTH/);
 });
 
 test("bbox rechaza height menor o igual a cero", () => {
@@ -63,10 +60,7 @@ test("bbox rechaza height menor o igual a cero", () => {
     height: -1,
   };
 
-  assert.throws(
-    () => validateBbox(bbox),
-    /INVALID_HEIGHT/,
-  );
+  assert.throws(() => validateBbox(bbox), /INVALID_HEIGHT/);
 });
 
 test("bbox rechaza coordenada x negativa", () => {
@@ -77,10 +71,7 @@ test("bbox rechaza coordenada x negativa", () => {
     height: 100,
   };
 
-  assert.throws(
-    () => validateBbox(bbox),
-    /INVALID_X/,
-  );
+  assert.throws(() => validateBbox(bbox), /INVALID_X/);
 });
 
 test("bbox rechaza coordenada y negativa", () => {
@@ -91,15 +82,9 @@ test("bbox rechaza coordenada y negativa", () => {
     height: 100,
   };
 
-  assert.throws(
-    () => validateBbox(bbox),
-    /INVALID_Y/,
-  );
+  assert.throws(() => validateBbox(bbox), /INVALID_Y/);
 });
 
 test("area es width por height", () => {
-  assert.equal(
-    calculateArea(300, 200),
-    60000,
-  );
+  assert.equal(calculateArea(300, 200), 60000);
 });

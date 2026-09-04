@@ -5,23 +5,26 @@
   "main": "src/index.ts",
   "scripts": {
     "db:generate": "drizzle-kit generate:mysql",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:migrate": "tsx --env-file=.env src/data/migrate.ts",
+    "db:seed": "tsx --env-file=.env src/data/seed.ts",
     "prestart:dev": "npm run db:migrate && npm run db:seed",
-    "start:dev": "tsx watch src/index.ts",
+    "start:dev": "tsx watch --env-file=.env src/index.ts",
     "dev": "npm run prestart:dev && npm run start:dev",
     "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "check": "biome check .",
     "format": "biome format --write .",
     "test": "tsx --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
+    "@types/cors": "^2.8.19",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.30.10",
     "express": "^4.19.2",
     "minio": "^7.1.3",
-    "mysql2": "^3.9.7",
     "multer": "^2.0.2",
+    "mysql2": "^3.9.7",
     "zod": "^4.0.0"
   },
   "devDependencies": {

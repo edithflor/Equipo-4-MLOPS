@@ -1,12 +1,19 @@
 {
-  "version": "7",
+  "version": "5",
   "dialect": "mysql",
   "entries": [
     {
       "idx": 0,
       "version": "5",
-      "when": 1788530936419,
-      "tag": "0000_nasty_colleen_wing",
+      "when": 1788554791528,
+      "tag": "0000_outgoing_wasp",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1788556288080,
+      "tag": "0001_loose_psynapse",
       "breakpoints": true
     }
   ]

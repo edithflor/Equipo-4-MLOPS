@@ -1,69 +1,47 @@
+import type { BoundingBox } from "./bboxService.js";
+
 export class AnnotationSession {
-  private readonly imageIds: string[];
-  private currentIndex = 0;
-  private zoomLevel = 1;
+  private history: BoundingBox[][] = [];
+  private currentBoxes: BoundingBox[] = [];
+  private zoomLevel = 1.0;
+  private currentImageIndex = 0;
 
-  constructor(imageIds: string[]) {
-    if (imageIds.length === 0) {
-      throw new Error(
-        "NO_IMAGES_AVAILABLE",
-      );
-    }
-
-    this.imageIds = [...imageIds];
+  constructor(
+    private images: { id: string; filename: string }[],
+    initialBoxes: BoundingBox[] = [],
+  ) {
+    this.currentBoxes = initialBoxes;
   }
 
-  get currentImageId(): string {
-    return this.imageIds[
-      this.currentIndex
-    ];
-  }
-
-  get zoom(): number {
+  public getZoomLevel(): number {
     return this.zoomLevel;
   }
 
-  zoomIn(): number {
-    this.zoomLevel *= 1.25;
-    return this.zoomLevel;
-  }
-
-  zoomOut(): number {
-    this.zoomLevel = Math.max(
-      1,
-      this.zoomLevel / 1.25,
-    );
-
-    return this.zoomLevel;
-  }
-
-  next(): {
-    imageId: string;
-    atEnd: boolean;
-  } {
-    if (
-      this.currentIndex >=
-      this.imageIds.length - 1
-    ) {
-      return {
-        imageId: this.currentImageId,
-        atEnd: true,
-      };
+  public applyZoomIn(): void {
+    if (this.zoomLevel < 3.0) {
+      this.zoomLevel += 0.25;
     }
-
-    this.currentIndex++;
-
-    return {
-      imageId: this.currentImageId,
-      atEnd: false,
-    };
   }
 
-  previous(): string {
-    if (this.currentIndex > 0) {
-      this.currentIndex--;
+  public applyZoomOut(): void {
+    if (this.zoomLevel > 0.5) {
+      this.zoomLevel -= 0.25;
     }
+  }
 
-    return this.currentImageId;
+  public getCurrentImageView() {
+    return this.images[this.currentImageIndex];
+  }
+
+  public nextImage(): void {
+    if (this.currentImageIndex < this.images.length - 1) {
+      this.currentImageIndex++;
+    }
+  }
+
+  public prevImage(): void {
+    if (this.currentImageIndex > 0) {
+      this.currentImageIndex--;
+    }
   }
 }

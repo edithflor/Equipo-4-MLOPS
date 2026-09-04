@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "bc328bc0-bd9c-44d0-92e4-efa23fd178e1",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "d53d5426-b772-497f-b0dc-d7d117ddfb34",
+  "prevId": "bc328bc0-bd9c-44d0-92e4-efa23fd178e1",
   "tables": {
     "bboxes": {
       "name": "bboxes",
@@ -65,7 +65,7 @@
           "tableTo": "images",
           "columnsFrom": ["image_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "bboxes_category_id_categories_id_fk": {
@@ -98,7 +98,7 @@
         },
         "name": {
           "name": "name",
-          "type": "varchar(255)",
+          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -140,7 +140,7 @@
         },
         "mimetype": {
           "name": "mimetype",
-          "type": "varchar(50)",
+          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -154,7 +154,7 @@
         },
         "url": {
           "name": "url",
-          "type": "varchar(500)",
+          "type": "varchar(512)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false

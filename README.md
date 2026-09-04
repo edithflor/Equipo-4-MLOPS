@@ -33,42 +33,41 @@ On-premise monolithic image annotation portal for the MLOps course project (COCO
 
 Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com/).
 
-1. **Configure environment:**
-   ```bash
+1. *Configure environment:*
+   bash
    cp .env.example .env
-   ```
+   
 
-2. **Install dependencies:**
-   ```bash
+2. *Install dependencies:*
+   bash
    npm ci
-   ```
+   
 
-3. **Run verification commands:**
-   ```bash
+3. *Run verification commands:*
+   bash
    npm run typecheck
    npm run check
    npm run test
    npm run build
-   ```
+   
 
-4. **Start the application locally:**
-   ```bash
-   npm run dev
-   ```
+4. *Start the complete application:*
+   bash
+   npm run up
+   
 
-   The application should listen on `http://localhost:3000` and return:
+   This is the single startup command. It starts MariaDB and MinIO with Docker Compose, initializes the MinIO bucket, applies the Drizzle migrations, runs the idempotent seeder, and starts the application on port 3000.
 
-   ```json
+5. *Verify the application:*
+
+   The application should be available at http://localhost:3000. The health endpoint at http://localhost:3000/health should return:
+
+   json
    {
      "name": "equipo-4-mlops",
      "status": "ok",
      "environment": "development"
    }
-   ```
+   
 
-5. **Start the full Docker stack:**
-   ```bash
-   docker compose up --build
-   ```
-
-   Docker Compose starts the application, MariaDB, MinIO, and the MinIO bucket initialization job.
+   MinIO Console is available at http://localhost:9001.

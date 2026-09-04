@@ -1,7 +1,13 @@
-import mysql from "mysql2/promise";
 import { drizzle } from "drizzle-orm/mysql2";
-import { env } from "../config/env";
+import mysql from "mysql2/promise";
+import { env } from "../config/env.js";
 
-const pool = mysql.createPool(env.DATABASE_URL);
+const poolConnection = mysql.createPool({
+  host: env.MARIADB_HOST,
+  port: env.MARIADB_PORT,
+  user: env.MARIADB_USER,
+  password: env.MARIADB_PASSWORD,
+  database: env.MARIADB_DATABASE,
+});
 
-export const db = drizzle(pool);
+export const db = drizzle(poolConnection);

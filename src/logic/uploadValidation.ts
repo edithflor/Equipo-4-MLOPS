@@ -1,67 +1,29 @@
 import { z } from "zod";
 
-export const uploadInputSchema =
-  z.object({
-    filename: z
-      .string()
-      .min(1),
+const MAX_BYTES = Number(process.env.UPLOAD_MAX_BYTES || 5242880);
+const ALLOWED_MIMES = (process.env.UPLOAD_MIME_ALLOWLIST || "image/jpeg,image/png").split(",");
 
-    mimeType: z
-      .string()
-      .min(1),
+export const UploadImageSchema = z.object({
+  filename: z.string().min(1, "El nombre de archivo es obligatorio"),
+  mimetype: z.string().refine((val) => ALLOWED_MIMES.includes(val), {
+    message: "Tipo de archivo no permitido (mime inválido)",
+  }),
+  size: z.number().max(MAX_BYTES, "El tamaño del archivo excede el límite permitido"),
+  buffer: z.instanceof(Buffer),
+});
 
-    sizeBytes: z
-      .number()
-      .int()
-      .positive(),
-
-    buffer: z
-      .instanceof(Buffer),
-
-    width: z
-      .number()
-      .int()
-      .positive(),
-
-    height: z
-      .number()
-      .int()
-      .positive(),
-  });
-
-export type UploadInput =
-  z.infer<
-    typeof uploadInputSchema
-  >;
-
-export type UploadLimits = {
-  maxBytes: number;
-  allowedMimeTypes: string[];
-};
-
-export function validateUpload(
-  input: UploadInput,
-  limits: UploadLimits,
-): void {
-  const data =
-    uploadInputSchema.parse(input);
-
-  if (
-    !limits.allowedMimeTypes.includes(
-      data.mimeType,
-    )
-  ) {
-    throw new Error(
-      "INVALID_MIME",
-    );
-  }
-
-  if (
-    data.sizeBytes >
-    limits.maxBytes
-  ) {
-    throw new Error(
-      "FILE_TOO_LARGE",
-    );
+export type UploadImageInput = z.infer<typeof UploadImageSchema>;
+export class UploadValidationService {
+  public validate(payload: unknown): { success: boolean; data?: UploadImageInput; error?: string } {
+    const result = UploadImageSchema.safeParse(payload);
+    if (!result.success) {
+      // Extrae los mensajes de forma segura sea cual sea la versión de Zod
+      const errorMsg =
+        result.error?.issues?.map((e) => e.message).join(", ") ||
+        result.error?.message ||
+        "Error de validación";
+      return { success: false, error: errorMsg };
+    }
+    return { success: true, data: result.data };
   }
 }

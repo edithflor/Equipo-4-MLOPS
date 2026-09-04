@@ -3,18 +3,13 @@ import test from "node:test";
 import { AnnotationHistory } from "../src/logic/annotationHistory";
 
 test("history inicia vacía", () => {
-  const history =
-    new AnnotationHistory();
+  const history = new AnnotationHistory();
 
-  assert.equal(
-    history.size,
-    0,
-  );
+  assert.equal(history.size, 0);
 });
 
 test("push agrega una acción", () => {
-  const history =
-    new AnnotationHistory();
+  const history = new AnnotationHistory();
 
   history.push({
     type: "create",
@@ -22,15 +17,11 @@ test("push agrega una acción", () => {
     undo: async () => {},
   });
 
-  assert.equal(
-    history.size,
-    1,
-  );
+  assert.equal(history.size, 1);
 });
 
 test("undo ejecuta la acción inversa", async () => {
-  const history =
-    new AnnotationHistory();
+  const history = new AnnotationHistory();
 
   let reverted = false;
 
@@ -42,41 +33,25 @@ test("undo ejecuta la acción inversa", async () => {
     },
   });
 
-  const result =
-    await history.undo();
+  const result = await history.undo();
 
-  assert.equal(
-    result,
-    true,
-  );
+  assert.equal(result, true);
 
-  assert.equal(
-    reverted,
-    true,
-  );
+  assert.equal(reverted, true);
 
-  assert.equal(
-    history.size,
-    0,
-  );
+  assert.equal(history.size, 0);
 });
 
 test("undo sin historial devuelve false", async () => {
-  const history =
-    new AnnotationHistory();
+  const history = new AnnotationHistory();
 
-  const result =
-    await history.undo();
+  const result = await history.undo();
 
-  assert.equal(
-    result,
-    false,
-  );
+  assert.equal(result, false);
 });
 
 test("dos undo se ejecutan en orden LIFO", async () => {
-  const history =
-    new AnnotationHistory();
+  const history = new AnnotationHistory();
 
   const executed: string[] = [];
 
@@ -99,8 +74,5 @@ test("dos undo se ejecutan en orden LIFO", async () => {
   await history.undo();
   await history.undo();
 
-  assert.deepEqual(
-    executed,
-    ["bbox-2", "bbox-1"],
-  );
+  assert.deepEqual(executed, ["bbox-2", "bbox-1"]);
 });

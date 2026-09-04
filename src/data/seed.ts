@@ -29,21 +29,37 @@ export async function runSeeder() {
     await minioClient.makeBucket(bucket, "us-east-1");
   }
 
-  const dummyBuffer = Buffer.from(
-    "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAGBAQABPxA=",
-    "base64",
-  );
-
-  const mockImages = [
-    { id: 1, objectKey: "seed-img-1.jpg", mime: "image/jpeg", width: 800, height: 600 },
-    { id: 2, objectKey: "seed-img-2.jpg", mime: "image/jpeg", width: 1024, height: 768 },
+  // URLs de imágenes reales y estables de prueba (acordes a MLOps / objetos)
+  const mockImagesToFetch = [
+    { 
+      id: 1, 
+      objectKey: "seed-img-1.jpg", 
+      mime: "image/jpeg", 
+      width: 640, 
+      height: 480, 
+      url: "https://picsum.photos/id/64/640/480" // Foto de ejemplo (persona/entorno)
+    },
+    { 
+      id: 2, 
+      objectKey: "seed-img-2.jpg", 
+      mime: "image/jpeg", 
+      width: 640, 
+      height: 480, 
+      url: "https://picsum.photos/id/111/640/480" // Foto de ejemplo (vehículo/objeto)
+    },
   ];
 
-  for (const img of mockImages) {
+  for (const img of mockImagesToFetch) {
     try {
       await minioClient.statObject(bucket, img.objectKey);
     } catch (e) {
-      await minioClient.putObject(bucket, img.objectKey, dummyBuffer, dummyBuffer.length, {
+      // Descargamos la imagen real de internet en tiempo de ejecución
+      console.log(`📥 Descargando imagen de prueba para ${img.objectKey}...`);
+      const response = await fetch(img.url);
+      const arrayBuffer = await response.arrayBuffer();
+      const imageBuffer = Buffer.from(arrayBuffer);
+
+      await minioClient.putObject(bucket, img.objectKey, imageBuffer, imageBuffer.length, {
         "Content-Type": img.mime,
       });
     }
@@ -51,10 +67,18 @@ export async function runSeeder() {
 
   await db
     .insert(images)
-    .values(mockImages)
+    .values(
+      mockImagesToFetch.map(({ id, objectKey, mime, width, height }) => ({
+        id,
+        objectKey,
+        mime,
+        width,
+        height,
+      }))
+    )
     .onDuplicateKeyUpdate({ set: { id: sql`id` } });
 
-  console.log("✅ Seeder finalizado (2 categorías, 2 imágenes).");
+  console.log("✅ Seeder finalizado (2 categorías, 2 imágenes reales y visibles).");
 }
 
 if (process.argv[1].endsWith("seed.ts")) {

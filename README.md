@@ -51,12 +51,16 @@ Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com
    npm run build
    ```
 
-4. **Start the application locally:**
+4. **Start the complete application:**
    ```bash
-   npm run dev
+   npm run up
    ```
 
-   The application should listen on `http://localhost:3000` and return:
+   This is the single startup command. It starts MariaDB and MinIO with Docker Compose, initializes the MinIO bucket, applies the Drizzle migrations, runs the idempotent seeder, and starts the application on port `3000`.
+
+5. **Verify the application:**
+
+   The application should be available at `http://localhost:3000`. The health endpoint at `http://localhost:3000/health` should return:
 
    ```json
    {
@@ -66,9 +70,4 @@ Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com
    }
    ```
 
-5. **Start the full Docker stack:**
-   ```bash
-   docker compose up --build
-   ```
-
-   Docker Compose starts the application, MariaDB, MinIO, and the MinIO bucket initialization job.
+   MinIO Console is available at `http://localhost:9001`.

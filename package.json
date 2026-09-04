@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "check": "biome check .",
     "format": "biome format --write .",
-    "test": "tsx --test \"tests/**/*.test.ts\""
+    "test": "tsx --test \"tests/**/*.test.ts\"",
+    "up": "docker compose up -d"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",

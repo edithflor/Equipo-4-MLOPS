@@ -1,28 +1,67 @@
-import * as dotenv from "dotenv";
+import "dotenv/config";
 import { z } from "zod";
 
-dotenv.config();
+export const envSchema = z.object({
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
 
-const portSchema = z.coerce.number().int().min(1).max(65535);
+  APP_PORT_DEV: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(3000),
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]),
-  APP_PORT: portSchema,
-  PROD_APP_PORT: portSchema,
-  MARIADB_HOST: z.string().min(1),
-  MARIADB_PORT: portSchema,
-  MARIADB_DATABASE: z.string().min(1),
-  MARIADB_USER: z.string().min(1),
-  MARIADB_PASSWORD: z.string().min(1),
-  MARIADB_ROOT_PASSWORD: z.string().min(1),
+  APP_PORT_PROD: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(3100),
+
+  DB_HOST: z.string().min(1),
+  DB_PORT: z.coerce.number().int().positive(),
+  DB_USER: z.string().min(1),
+  DB_PASSWORD: z.string().min(1),
+  DB_NAME: z.string().min(1),
+  DB_ROOT_PASSWORD: z.string().min(1),
+  DATABASE_URL: z.string().min(1),
+
   MINIO_ENDPOINT: z.string().min(1),
-  MINIO_API_PORT: portSchema,
-  MINIO_CONSOLE_PORT: portSchema,
-  MINIO_ROOT_USER: z.string().min(1),
-  MINIO_ROOT_PASSWORD: z.string().min(1),
-  MINIO_BUCKET_IMAGES: z.string().min(1),
+  MINIO_PORT: z.coerce.number().int().positive(),
+
+  MINIO_USE_SSL: z
+    .enum(["true", "false"])
+    .transform(
+      (value) => value === "true",
+    ),
+
+  MINIO_ACCESS_KEY: z.string().min(1),
+  MINIO_SECRET_KEY: z.string().min(1),
+  MINIO_BUCKET_NAME: z.string().min(1),
+
+  UPLOAD_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .positive(),
+
+  UPLOAD_MIME_ALLOWLIST: z
+    .string()
+    .min(1)
+    .transform((value) =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
 });
 
-export const env = envSchema.parse(process.env);
+export type Env =
+  z.infer<typeof envSchema>;
 
-export type Env = z.infer<typeof envSchema>;
+export function loadEnv(): Env {
+  return envSchema.parse(
+    process.env,
+  );
+}
+
+export const env = loadEnv();

@@ -1,91 +1,125 @@
-import { sql } from "drizzle-orm";
-import { Client } from "minio";
-import { env } from "../config/env.js";
-import { db, poolConnection } from "./db.js";
-import { categories, images } from "./schema.js";
+import crypto from "node:crypto";
+import { eq } from "drizzle-orm";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { db } from "../data/db";
+import { categories, images } from "./schema";
+import {
+  BUCKET_NAME,
+  ensureBucketExists,
+  minioClient,
+} from "../lib/minio";
 
-const minioClient = new Client({
-  endPoint: env.MINIO_ENDPOINT,
-  port: env.MINIO_API_PORT,
-  useSSL: false,
-  accessKey: env.MINIO_ROOT_USER,
-  secretKey: env.MINIO_ROOT_PASSWORD,
-});
+const CATEGORY_DATA = [
+  {
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "persona",
+    colorHex: "#4CAF50",
+  },
+  {
+    id: "22222222-2222-4222-8222-222222222222",
+    name: "auto",
+    colorHex: "#2196F3",
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333333",
+    name: "bicicleta",
+    colorHex: "#FF9800",
+  },
+];
 
-export async function runSeeder() {
-  console.log("🌱 Ejecutando seeder idempotente...");
+const IMAGE_DATA = [
+  {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    filename: "seed-001.png",
+    objectKey: "seed/seed-001.png",
+    width: 1,
+    height: 1,
+  },
+  {
+    id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    filename: "seed-002.png",
+    objectKey: "seed/seed-002.png",
+    width: 1,
+    height: 1,
+  },
+];
 
-  await db
-    .insert(categories)
-    .values([
-      { id: 1, name: "persona", color: "#e74c3c" },
-      { id: 2, name: "vehiculo", color: "#3498db" },
-    ])
-    .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+const ONE_PIXEL_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64",
+);
 
-  const bucket = env.MINIO_BUCKET_IMAGES;
-  const bucketExists = await minioClient.bucketExists(bucket);
-  if (!bucketExists) {
-    await minioClient.makeBucket(bucket, "us-east-1");
+async function seed(): Promise<void> {
+  await ensureBucketExists();
+
+  for (const category of CATEGORY_DATA) {
+    const existing = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, category.id))
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(categories).values(category);
+    }
   }
 
-  // URLs de imágenes reales y estables de prueba (acordes a MLOps / objetos)
-  const mockImagesToFetch = [
-    {
-      id: 1,
-      objectKey: "seed-img-1.jpg",
-      mime: "image/jpeg",
-      width: 640,
-      height: 480,
-      url: "https://picsum.photos/id/64/640/480", // Foto de ejemplo (persona/entorno)
-    },
-    {
-      id: 2,
-      objectKey: "seed-img-2.jpg",
-      mime: "image/jpeg",
-      width: 640,
-      height: 480,
-      url: "https://picsum.photos/id/111/640/480", // Foto de ejemplo (vehículo/objeto)
-    },
-  ];
+  for (const image of IMAGE_DATA) {
+    const existing = await db
+      .select()
+      .from(images)
+      .where(eq(images.id, image.id))
+      .limit(1);
 
-  for (const img of mockImagesToFetch) {
-    try {
-      await minioClient.statObject(bucket, img.objectKey);
-    } catch (e) {
-      // Descargamos la imagen real de internet en tiempo de ejecución
-      console.log(`📥 Descargando imagen de prueba para ${img.objectKey}...`);
-      const response = await fetch(img.url);
-      const arrayBuffer = await response.arrayBuffer();
-      const imageBuffer = Buffer.from(arrayBuffer);
+    if (existing.length === 0) {
+      const existsInMinio = await objectExists(
+        BUCKET_NAME,
+        image.objectKey,
+      );
 
-      await minioClient.putObject(bucket, img.objectKey, imageBuffer, imageBuffer.length, {
-        "Content-Type": img.mime,
+      if (!existsInMinio) {
+        await minioClient.putObject(
+          BUCKET_NAME,
+          image.objectKey,
+          ONE_PIXEL_PNG,
+          ONE_PIXEL_PNG.length,
+          {
+            "Content-Type": "image/png",
+          },
+        );
+      }
+
+      await db.insert(images).values({
+        id: image.id,
+        filename: image.filename,
+        mimeType: "image/png",
+        sizeBytes: ONE_PIXEL_PNG.length,
+        minioBucket: BUCKET_NAME,
+        minioObjectKey: image.objectKey,
+        width: image.width,
+        height: image.height,
+        status: "ready",
       });
     }
   }
 
-  await db
-    .insert(images)
-    .values(
-      mockImagesToFetch.map(({ id, objectKey, mime, width, height }) => ({
-        id,
-        objectKey,
-        mime,
-        width,
-        height,
-      })),
-    )
-    .onDuplicateKeyUpdate({ set: { id: sql`id` } });
-
-  console.log("✅ Seeder finalizado (2 categorías, 2 imágenes reales y visibles).");
+  console.log("Seeder ejecutado correctamente.");
 }
 
-if (process.argv[1].endsWith("seed.ts")) {
-  runSeeder()
-    .catch((error) => {
-      console.error("❌ Error en el seeder:", error);
-      process.exit(1);
-    })
-    .finally(() => poolConnection.end());
+async function objectExists(
+  bucket: string,
+  objectKey: string,
+): Promise<boolean> {
+  try {
+    await minioClient.statObject(bucket, objectKey);
+    return true;
+  } catch {
+    return false;
+  }
 }
+
+seed().catch((error) => {
+  console.error("Error ejecutando seed:", error);
+  process.exit(1);
+});

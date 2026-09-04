@@ -29,7 +29,10 @@ export async function runSeeder() {
     await minioClient.makeBucket(bucket, "us-east-1");
   }
 
-  const dummyBuffer = Buffer.from("dummy-image-content");
+  const dummyBuffer = Buffer.from(
+    "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAGBAQABPxA=",
+    "base64",
+  );
 
   const mockImages = [
     { id: 1, objectKey: "seed-img-1.jpg", mime: "image/jpeg", width: 800, height: 600 },
@@ -56,6 +59,9 @@ export async function runSeeder() {
 
 if (process.argv[1].endsWith("seed.ts")) {
   runSeeder()
-    .catch(console.error)
+    .catch((error) => {
+      console.error("❌ Error en el seeder:", error);
+      process.exit(1);
+    })
     .finally(() => poolConnection.end());
 }

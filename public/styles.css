@@ -27,6 +27,7 @@ input {
 .upload-panel,
 .dashboard-panel,
 .category-panel,
+.search-panel,
 .annotation-panel,
 .viewer {
   border: 1px solid #d8dee9;
@@ -37,6 +38,7 @@ input {
 
 .dashboard-panel,
 .category-panel,
+.search-panel,
 .annotation-panel,
 .viewer {
   margin-top: 20px;
@@ -78,12 +80,21 @@ h3 {
   align-items: end;
 }
 
+.search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 18px;
+  align-items: end;
+}
+
 .file-label {
   grid-column: 1 / -1;
   font-weight: 700;
 }
 
-input[type="file"] {
+input[type="file"],
+input[type="search"] {
   min-width: 0;
   border: 1px solid #b9c4d0;
   border-radius: 6px;
@@ -459,7 +470,8 @@ button:disabled {
 }
 
 @media (max-width: 640px) {
-  .upload-form {
+  .upload-form,
+  .search-form {
     grid-template-columns: 1fr;
   }
 

@@ -14,6 +14,12 @@ const annotationProgressChart = document.querySelector("#annotation-progress-cha
 const categoryList = document.querySelector("#category-list");
 const categoryMessage = document.querySelector("#category-message");
 const selectedCategoryLabel = document.querySelector("#selected-category-label");
+const searchForm = document.querySelector("#search-form");
+const searchQueryInput = document.querySelector("#search-query");
+const searchButton = document.querySelector("#search-button");
+const searchMessage = document.querySelector("#search-message");
+const searchResults = document.querySelector("#search-results");
+const searchTotal = document.querySelector("#search-total");
 const annotationStage = document.querySelector("#annotation-stage");
 const annotationMessage = document.querySelector("#annotation-message");
 const deleteBoxButton = document.querySelector("#delete-box-button");
@@ -57,6 +63,11 @@ function setCategoryMessage(message, type) {
 function setMetricsMessage(message, type) {
   metricsMessage.textContent = message;
   metricsMessage.className = `status-message ${type}`;
+}
+
+function setSearchMessage(message, type) {
+  searchMessage.textContent = message;
+  searchMessage.className = `status-message ${type}`;
 }
 
 function setAnnotationMessage(message, type) {
@@ -262,6 +273,55 @@ function renderImages(nextImages) {
   }
 
   updateControls();
+}
+
+function renderSearchResults(items, total) {
+  searchTotal.textContent = formatCount(total);
+  searchResults.replaceChildren();
+
+  if (items.length === 0) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "empty-state";
+    emptyState.textContent = "Sin imágenes para esa búsqueda.";
+    searchResults.append(emptyState);
+    return;
+  }
+
+  for (const image of items) {
+    const card = document.createElement("article");
+    card.className = "image-card";
+    card.dataset.imageId = image.id;
+
+    const preview = document.createElement("img");
+    preview.src = image.url;
+    preview.alt = `Resultado ${image.filename}`;
+
+    const meta = document.createElement("div");
+    meta.className = "image-meta";
+
+    const filename = document.createElement("strong");
+    filename.textContent = image.filename;
+
+    const details = document.createElement("span");
+    details.textContent = `${image.mimetype} · ${formatBytes(image.size)}`;
+
+    const selectButton = document.createElement("button");
+    selectButton.type = "button";
+    selectButton.className = "prepare-annotation-button";
+    selectButton.textContent = "Seleccionar para anotar";
+    selectButton.addEventListener("click", () => {
+      const fullImage = images.find((item) => item.id === image.id) || image;
+      selectImage(fullImage).catch((error) => {
+        const message =
+          error instanceof Error ? error.message : "No se pudo seleccionar la imagen.";
+        setAnnotationMessage(message, "error");
+      });
+    });
+
+    meta.append(filename, details);
+    card.append(preview, meta, selectButton);
+    searchResults.append(card);
+  }
 }
 
 function renderObjectsByCategory(objectsByCategory) {
@@ -472,6 +532,19 @@ async function loadDashboardMetrics() {
   renderObjectsByCategory(payload.objectsByCategory);
   renderAnnotationProgress(payload.annotationProgress);
   setMetricsMessage("Métricas actualizadas desde la base de datos.", "success");
+}
+
+async function searchImages(query) {
+  const params = new URLSearchParams({ q: query });
+  const response = await fetch(`/search?${params.toString()}`);
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "No se pudo completar la búsqueda.");
+  }
+
+  renderSearchResults(payload.items, payload.total);
+  setSearchMessage("Búsqueda completada desde SQL.", "success");
 }
 
 async function createAnnotation(displayBox) {
@@ -831,6 +904,22 @@ form.addEventListener("submit", async (event) => {
     setStatus(message, "error");
   } finally {
     button.disabled = false;
+  }
+});
+
+searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  searchButton.disabled = true;
+
+  try {
+    await searchImages(searchQueryInput.value);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo completar la búsqueda.";
+    renderSearchResults([], 0);
+    setSearchMessage(message, "error");
+  } finally {
+    searchButton.disabled = false;
   }
 });
 

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portal de anotación</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="upload-panel" aria-labelledby="upload-title">
+        <div>
+          <p class="eyebrow">Fase 4</p>
+          <h1 id="upload-title">Portal de anotación</h1>
+        </div>
+
+        <form id="upload-form" class="upload-form">
+          <label class="file-label" for="image-input">Imagen JPEG o PNG</label>
+          <input id="image-input" name="image" type="file" accept="image/jpeg,image/png" />
+          <button id="upload-button" type="submit">Cargar imagen</button>
+        </form>
+
+        <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="viewer" aria-labelledby="images-title">
+        <div class="viewer-header">
+          <h2 id="images-title">Imágenes listas para anotar</h2>
+          <span id="image-count" class="image-count">0</span>
+        </div>
+        <div id="image-list" class="image-grid"></div>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

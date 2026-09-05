@@ -1,13 +1,37 @@
 services:
-  app:
+  migrate:
     build:
       context: .
-    restart: unless-stopped
+    image: captcha-anotacion-app
     depends_on:
       mariadb:
         condition: service_healthy
-      minio:
-        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      APP_PORT: ${APP_PORT}
+      PROD_APP_PORT: ${PROD_APP_PORT}
+      MARIADB_HOST: mariadb
+      MARIADB_PORT: ${MARIADB_PORT}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_USE_SSL: ${MINIO_USE_SSL}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+    command: ["node", "dist/data/migrate.js"]
+    restart: "no"
+
+  seed:
+    build:
+      context: .
+    image: captcha-anotacion-app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
       minio-init:
         condition: service_completed_successfully
     environment:
@@ -21,11 +45,42 @@ services:
       MARIADB_PASSWORD: ${MARIADB_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       MINIO_ENDPOINT: minio
-      MINIO_API_PORT: ${MINIO_API_PORT}
-      MINIO_CONSOLE_PORT: ${MINIO_CONSOLE_PORT}
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_IMAGES: ${MINIO_BUCKET_IMAGES}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_USE_SSL: ${MINIO_USE_SSL}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+    command: ["node", "dist/data/seed.js"]
+    restart: "no"
+
+  app:
+    build:
+      context: .
+    image: captcha-anotacion-app
+    restart: unless-stopped
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      APP_PORT: ${APP_PORT}
+      PROD_APP_PORT: ${PROD_APP_PORT}
+      MARIADB_HOST: mariadb
+      MARIADB_PORT: ${MARIADB_PORT}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_USE_SSL: ${MINIO_USE_SSL}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+      UPLOAD_MAX_BYTES: ${UPLOAD_MAX_BYTES}
+      UPLOAD_MIME_ALLOWLIST: ${UPLOAD_MIME_ALLOWLIST}
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
 
   mariadb:
     image: mariadb:11.4

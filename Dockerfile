@@ -6,6 +6,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY tsconfig.json ./
+COPY drizzle ./drizzle
 COPY src ./src
 RUN npm run build
 RUN npm prune --omit=dev
@@ -18,5 +19,6 @@ ENV NODE_ENV=development
 COPY package.json package-lock.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/drizzle ./drizzle
 
 CMD ["npm", "start"]

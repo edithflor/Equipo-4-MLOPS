@@ -1,54 +1,42 @@
-import { Client } from "minio";
-import { env } from "../config/env.js";
 import { db } from "./db.js";
-import { annotations, images } from "./schema.js";
+import { buildObjectUrl, putImageObjectIfMissing } from "./objectStorage.js";
+import { images } from "./schema.js";
 
-const minioClient = new Client({
-  endPoint: env.MINIO_ENDPOINT,
-  port: env.MINIO_API_PORT,
-  useSSL: false,
-  accessKey: env.MINIO_ROOT_USER,
-  secretKey: env.MINIO_ROOT_PASSWORD,
-});
-
-export async function saveImage(
-  filename: string,
-  buffer: Buffer,
-  mimeType: string,
-  width: number,
-  height: number,
-) {
-  const bucket = env.MINIO_BUCKET_IMAGES;
-
-  const bucketExists = await minioClient.bucketExists(bucket);
-  if (!bucketExists) {
-    await minioClient.makeBucket(bucket, "us-east-1");
+export class ImageRepository {
+  public async save(data: {
+    id: string;
+    filename: string;
+    mimetype: string;
+    size: number;
+    url: string;
+  }): Promise<void> {
+    await db.insert(images).values(data);
   }
 
-  const objectKey = `${Date.now()}-${filename}`;
+  public async saveUploadedImage(data: {
+    id: string;
+    filename: string;
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+    objectName: string;
+  }): Promise<string> {
+    await putImageObjectIfMissing({
+      objectName: data.objectName,
+      buffer: data.buffer,
+      mimetype: data.mimetype,
+    });
 
-  await minioClient.putObject(bucket, objectKey, buffer, buffer.length, {
-    "Content-Type": mimeType,
-  });
+    const url = buildObjectUrl(data.objectName);
 
-  const [insertResult] = await db.insert(images).values({
-    objectKey,
-    mime: mimeType,
-    width,
-    height,
-  });
+    await this.save({
+      id: data.id,
+      filename: data.filename,
+      mimetype: data.mimetype,
+      size: data.size,
+      url,
+    });
 
-  return { objectKey, insertId: insertResult.insertId };
-}
-
-export async function insertAnnotation(data: {
-  imageId: number;
-  categoryId: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}) {
-  const [result] = await db.insert(annotations).values(data);
-  return result.insertId;
+    return url;
+  }
 }

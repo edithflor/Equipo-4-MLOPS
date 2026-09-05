@@ -18,6 +18,14 @@ export const cocoAnnotationSectionSchema = z.object({
   id: cocoIdSchema,
   image_id: cocoIdSchema,
   category_id: cocoIdSchema,
+  bbox: z.tuple([
+    z.number().nonnegative(),
+    z.number().nonnegative(),
+    z.number().positive(),
+    z.number().positive(),
+  ]),
+  area: z.number().positive(),
+  iscrowd: z.union([z.literal(0), z.literal(1)]),
 });
 
 export const cocoDatasetSectionsSchema = z
@@ -50,6 +58,14 @@ export const cocoDatasetSectionsSchema = z
           path: ["annotations"],
         });
       }
+
+      if (Math.abs(annotation.area - annotation.bbox[2] * annotation.bbox[3]) > 0.000001) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `annotation ${annotation.id} area must be width * height`,
+          path: ["annotations"],
+        });
+      }
     }
   });
 
@@ -77,6 +93,10 @@ export interface CocoSourceAnnotation {
   id: CocoId;
   imageId: CocoId;
   categoryId: CocoId;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface CocoSourceDataset {
@@ -112,6 +132,10 @@ function resolveFileName(image: CocoSourceImage): string {
   return image.fileName ?? image.filename ?? image.objectName ?? "";
 }
 
+function buildBbox(annotation: CocoSourceAnnotation): [number, number, number, number] {
+  return [annotation.x, annotation.y, annotation.width, annotation.height];
+}
+
 export function exportCocoDataset(source: CocoSourceDataset): CocoDatasetSections {
   const dataset = {
     images: source.images.map((image) => ({
@@ -124,6 +148,9 @@ export function exportCocoDataset(source: CocoSourceDataset): CocoDatasetSection
       id: annotation.id,
       image_id: annotation.imageId,
       category_id: annotation.categoryId,
+      bbox: buildBbox(annotation),
+      area: annotation.width * annotation.height,
+      iscrowd: 0,
     })),
     categories: source.categories.map((category) => ({
       id: category.id,

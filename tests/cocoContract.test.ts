@@ -39,9 +39,9 @@ type CocoAnnotation = {
   id: number;
   image_id: number;
   category_id: number;
-  bbox?: [number, number, number, number];
-  area?: number;
-  iscrowd?: number;
+  bbox: [number, number, number, number];
+  area: number;
+  iscrowd: number;
 };
 
 type CocoDataset = {
@@ -162,9 +162,7 @@ function assertCocoGeometryContract(dataset: CocoDataset): void {
       "bbox must not be normalized to the 0-1 range.",
     );
     assert.ok(
-      annotation.bbox &&
-        annotation.area !== undefined &&
-        Math.abs(annotation.area - annotation.bbox[2] * annotation.bbox[3]) < 0.000001,
+      Math.abs(annotation.area - annotation.bbox[2] * annotation.bbox[3]) < 0.000001,
       "area must be width * height.",
     );
     assert.ok(

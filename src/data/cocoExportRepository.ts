@@ -116,6 +116,10 @@ export class CocoExportRepository {
         id: annotation.id,
         imageId: annotation.imageId,
         categoryId: annotation.categoryId,
+        x: annotation.x,
+        y: annotation.y,
+        width: annotation.width,
+        height: annotation.height,
       })),
       categories: persistedCategories.map((category) => ({
         id: category.id,

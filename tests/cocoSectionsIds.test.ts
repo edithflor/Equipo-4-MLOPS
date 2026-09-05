@@ -36,11 +36,19 @@ const normalDataset: CocoSourceDataset = {
       id: 501,
       imageId: 101,
       categoryId: 7,
+      x: 10,
+      y: 20,
+      width: 30,
+      height: 40,
     },
     {
       id: 502,
       imageId: 102,
       categoryId: 8,
+      x: 50,
+      y: 60,
+      width: 70,
+      height: 80,
     },
   ],
 };
@@ -97,7 +105,17 @@ test("F6-02 rejects orphan annotation references", () => {
     () =>
       exportCocoDataset({
         ...normalDataset,
-        annotations: [{ id: 999, imageId: 999, categoryId: 7 }],
+        annotations: [
+          {
+            id: 999,
+            imageId: 999,
+            categoryId: 7,
+            x: 10,
+            y: 20,
+            width: 30,
+            height: 40,
+          },
+        ],
       }),
     /missing image_id/,
   );

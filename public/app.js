@@ -12,16 +12,32 @@ const selectedCategoryLabel = document.querySelector("#selected-category-label")
 const annotationStage = document.querySelector("#annotation-stage");
 const annotationMessage = document.querySelector("#annotation-message");
 const deleteBoxButton = document.querySelector("#delete-box-button");
+const previousImageButton = document.querySelector("#previous-image-button");
+const nextImageButton = document.querySelector("#next-image-button");
+const saveNextButton = document.querySelector("#save-next-button");
+const zoomOutButton = document.querySelector("#zoom-out-button");
+const zoomInButton = document.querySelector("#zoom-in-button");
+const undoButton = document.querySelector("#undo-button");
+const zoomLabel = document.querySelector("#zoom-label");
+const imagePositionLabel = document.querySelector("#image-position-label");
+
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.25;
+const BASE_CANVAS_WIDTH = 720;
 
 let images = [];
 let categories = [];
 let selectedImage = null;
+let selectedImageIndex = -1;
 let selectedCategory = null;
 let annotations = [];
 let selectedAnnotationId = null;
 let canvasImage = null;
 let canvasLayer = null;
 let activePointer = null;
+let zoomLevel = 1;
+let historyStack = [];
 
 function setStatus(message, type) {
   statusMessage.textContent = message;
@@ -36,6 +52,49 @@ function setCategoryMessage(message, type) {
 function setAnnotationMessage(message, type) {
   annotationMessage.textContent = message;
   annotationMessage.className = `status-message ${type}`;
+}
+
+function updateControls() {
+  const hasImage = selectedImage !== null;
+  const atFirstImage = selectedImageIndex <= 0;
+  const atLastImage = selectedImageIndex >= images.length - 1;
+
+  previousImageButton.disabled = !hasImage || images.length === 0;
+  nextImageButton.disabled = !hasImage || images.length === 0;
+  saveNextButton.disabled = !hasImage || images.length === 0;
+  zoomOutButton.disabled = !hasImage || zoomLevel <= MIN_ZOOM;
+  zoomInButton.disabled = !hasImage || zoomLevel >= MAX_ZOOM;
+  undoButton.disabled = historyStack.length === 0;
+  imagePositionLabel.textContent = hasImage
+    ? `${selectedImageIndex + 1} de ${images.length}`
+    : "Sin imagen";
+
+  previousImageButton.dataset.boundary = String(atFirstImage);
+  nextImageButton.dataset.boundary = String(atLastImage);
+  saveNextButton.dataset.boundary = String(atLastImage);
+}
+
+function pushHistory(action) {
+  historyStack.push(action);
+  updateControls();
+}
+
+function clearHistory() {
+  historyStack = [];
+  updateControls();
+}
+
+function applyZoom() {
+  zoomLevel = Math.min(Math.max(zoomLevel, MIN_ZOOM), MAX_ZOOM);
+  zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+
+  const canvas = canvasImage?.closest(".annotation-canvas");
+  if (canvas) {
+    canvas.style.width = `${BASE_CANVAS_WIDTH * zoomLevel}px`;
+  }
+
+  renderAnnotations();
+  updateControls();
 }
 
 function updateSelectedCategory(category) {
@@ -187,6 +246,8 @@ function renderImages(nextImages) {
     card.append(preview, meta, selectButton);
     imageList.append(card);
   }
+
+  updateControls();
 }
 
 function renderAnnotation(annotation) {
@@ -245,14 +306,18 @@ async function loadAnnotations(imageId) {
 
 async function selectImage(image) {
   selectedImage = image;
+  selectedImageIndex = images.findIndex((item) => item.id === image.id);
   annotations = [];
   selectedAnnotationId = null;
+  zoomLevel = 1;
+  clearHistory();
   deleteBoxButton.disabled = true;
   renderImages(images);
 
   annotationStage.replaceChildren();
   const canvas = document.createElement("div");
   canvas.className = "annotation-canvas";
+  canvas.style.width = `${BASE_CANVAS_WIDTH}px`;
 
   canvasImage = document.createElement("img");
   canvasImage.className = "annotation-image";
@@ -265,13 +330,36 @@ async function selectImage(image) {
   canvas.append(canvasImage, canvasLayer);
   annotationStage.append(canvas);
   setAnnotationMessage(`Imagen seleccionada: ${image.filename}.`, "success");
+  applyZoom();
+  updateControls();
 
   canvasImage.addEventListener("load", () => {
+    applyZoom();
     renderAnnotations();
   });
 
   canvas.addEventListener("pointerdown", startCreateBox);
   await loadAnnotations(image.id);
+}
+
+async function goToImage(nextIndex) {
+  if (images.length === 0) {
+    setAnnotationMessage("No hay imágenes para navegar.", "error");
+    return false;
+  }
+
+  if (nextIndex < 0) {
+    setAnnotationMessage("Ya estás en la primera imagen.", "error");
+    return false;
+  }
+
+  if (nextIndex >= images.length) {
+    setAnnotationMessage("Ya estás en la última imagen.", "error");
+    return false;
+  }
+
+  await selectImage(images[nextIndex]);
+  return true;
 }
 
 async function loadImages() {
@@ -319,11 +407,20 @@ async function createAnnotation(displayBox) {
 
   annotations.push(payload);
   selectedAnnotationId = payload.id;
+  pushHistory({
+    type: "create",
+    annotationId: payload.id,
+    undo: async () => {
+      await deleteAnnotation(payload.id);
+      annotations = annotations.filter((annotation) => annotation.id !== payload.id);
+      selectAnnotation(null);
+      renderAnnotations();
+    },
+  });
   renderAnnotations();
 }
 
-async function updateAnnotationGeometry(annotation, displayBox) {
-  const imageBox = displayToImageBox(displayBox, getImageMetrics());
+async function persistAnnotationGeometry(annotation, imageBox) {
   const response = await fetch(`/annotations/${annotation.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -338,6 +435,30 @@ async function updateAnnotationGeometry(annotation, displayBox) {
   Object.assign(annotation, imageBox);
   selectedAnnotationId = annotation.id;
   renderAnnotations();
+}
+
+async function updateAnnotationGeometry(annotation, displayBox, previousGeometry) {
+  const imageBox = displayToImageBox(displayBox, getImageMetrics());
+  await persistAnnotationGeometry(annotation, imageBox);
+
+  if (previousGeometry) {
+    pushHistory({
+      type: "update",
+      annotationId: annotation.id,
+      undo: async () => {
+        await persistAnnotationGeometry(annotation, previousGeometry);
+      },
+    });
+  }
+}
+
+async function deleteAnnotation(annotationId) {
+  const response = await fetch(`/annotations/${annotationId}`, { method: "DELETE" });
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "No se pudo eliminar la caja.");
+  }
 }
 
 function startCreateBox(event) {
@@ -390,6 +511,12 @@ function startExistingBoxInteraction(event, annotation) {
     annotation,
     start,
     startBox,
+    previousGeometry: {
+      x: annotation.x,
+      y: annotation.y,
+      width: annotation.width,
+      height: annotation.height,
+    },
   };
 
   annotationStage.setPointerCapture(pointerId);
@@ -480,7 +607,7 @@ annotationStage.addEventListener("pointerup", (event) => {
           height: Math.max(4, pointerState.startBox.height + deltaY),
         };
 
-  updateAnnotationGeometry(pointerState.annotation, displayBox)
+  updateAnnotationGeometry(pointerState.annotation, displayBox, pointerState.previousGeometry)
     .then(() => setAnnotationMessage("Caja actualizada y guardada.", "success"))
     .catch((error) => {
       const message = error instanceof Error ? error.message : "No se pudo actualizar la caja.";
@@ -496,20 +623,82 @@ deleteBoxButton.addEventListener("click", async () => {
   }
 
   try {
-    const response = await fetch(`/annotations/${selectedAnnotationId}`, { method: "DELETE" });
-    const payload = await response.json();
-
-    if (!response.ok) {
-      throw new Error(payload.error || "No se pudo eliminar la caja.");
-    }
+    await deleteAnnotation(selectedAnnotationId);
 
     annotations = annotations.filter((annotation) => annotation.id !== selectedAnnotationId);
     selectAnnotation(null);
+    clearHistory();
     renderAnnotations();
     setAnnotationMessage("Caja eliminada.", "success");
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo eliminar la caja.";
     setAnnotationMessage(message, "error");
+  }
+});
+
+previousImageButton.addEventListener("click", () => {
+  goToImage(selectedImageIndex - 1).catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudo cambiar de imagen.";
+    setAnnotationMessage(message, "error");
+  });
+});
+
+nextImageButton.addEventListener("click", () => {
+  goToImage(selectedImageIndex + 1).catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudo cambiar de imagen.";
+    setAnnotationMessage(message, "error");
+  });
+});
+
+saveNextButton.addEventListener("click", () => {
+  if (activePointer) {
+    setAnnotationMessage("Termina la edición actual antes de avanzar.", "error");
+    return;
+  }
+
+  goToImage(selectedImageIndex + 1)
+    .then((changedImage) => {
+      if (changedImage) {
+        setAnnotationMessage("Anotaciones guardadas. Siguiente imagen lista.", "success");
+      }
+    })
+    .catch((error) => {
+      const message = error instanceof Error ? error.message : "No se pudo avanzar.";
+      setAnnotationMessage(message, "error");
+    });
+});
+
+zoomOutButton.addEventListener("click", () => {
+  zoomLevel -= ZOOM_STEP;
+  applyZoom();
+  setAnnotationMessage("Zoom actualizado solo en la vista.", "success");
+});
+
+zoomInButton.addEventListener("click", () => {
+  zoomLevel += ZOOM_STEP;
+  applyZoom();
+  setAnnotationMessage("Zoom actualizado solo en la vista.", "success");
+});
+
+undoButton.addEventListener("click", async () => {
+  const action = historyStack.pop();
+
+  if (!action) {
+    setAnnotationMessage("No hay acciones para deshacer.", "error");
+    updateControls();
+    return;
+  }
+
+  try {
+    await action.undo();
+    renderAnnotations();
+    setAnnotationMessage("Última acción deshecha y persistida.", "success");
+  } catch (error) {
+    historyStack.push(action);
+    const message = error instanceof Error ? error.message : "No se pudo deshacer la acción.";
+    setAnnotationMessage(message, "error");
+  } finally {
+    updateControls();
   }
 });
 
@@ -563,3 +752,5 @@ loadCategories().catch((error) => {
   const message = error instanceof Error ? error.message : "No se pudieron cargar las categorías.";
   setCategoryMessage(message, "error");
 });
+
+updateControls();

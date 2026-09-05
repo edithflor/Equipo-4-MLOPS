@@ -55,3 +55,19 @@ test("converts stored image pixels back to displayed coordinates", async () => {
     { x: 50, y: 40, width: 100, height: 80 },
   );
 });
+
+test("zoomed display coordinates round-trip to the same original image pixels", async () => {
+  const { displayToImageBox, imageToDisplayBox } = await loadTransforms();
+  const originalBox = { x: 100, y: 80, width: 200, height: 160 };
+  const zoomedMetrics = {
+    naturalWidth: 1000,
+    naturalHeight: 800,
+    displayWidth: 750,
+    displayHeight: 600,
+  };
+
+  const zoomedDisplayBox = imageToDisplayBox(originalBox, zoomedMetrics);
+
+  assert.deepStrictEqual(zoomedDisplayBox, { x: 75, y: 60, width: 150, height: 120 });
+  assert.deepStrictEqual(displayToImageBox(zoomedDisplayBox, zoomedMetrics), originalBox);
+});

@@ -157,6 +157,33 @@ button:disabled {
   gap: 16px;
 }
 
+.annotation-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.annotation-toolbar button {
+  padding: 9px 12px;
+  background: #334e68;
+}
+
+.annotation-toolbar button:disabled {
+  cursor: not-allowed;
+}
+
+.toolbar-label {
+  min-width: 64px;
+  border: 1px solid #d8dee9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #ffffff;
+  text-align: center;
+  font-weight: 700;
+}
+
 .image-count {
   min-width: 36px;
   border-radius: 999px;
@@ -218,7 +245,7 @@ button:disabled {
 
 .annotation-canvas {
   position: relative;
-  max-width: 100%;
+  max-width: none;
   line-height: 0;
 }
 
@@ -230,8 +257,8 @@ button:disabled {
 
 .annotation-image {
   display: block;
-  max-width: 100%;
-  max-height: 640px;
+  width: 100%;
+  height: auto;
   object-fit: contain;
   user-select: none;
 }

@@ -50,6 +50,16 @@
           <h2 id="annotation-title">Canvas de anotación</h2>
           <button id="delete-box-button" type="button" disabled>Eliminar caja</button>
         </div>
+        <div class="annotation-toolbar" aria-label="Controles de anotación">
+          <button id="previous-image-button" type="button">Anterior</button>
+          <button id="next-image-button" type="button">Siguiente</button>
+          <button id="save-next-button" type="button">Guardar y siguiente</button>
+          <button id="zoom-out-button" type="button">Zoom -</button>
+          <span id="zoom-label" class="toolbar-label">100%</span>
+          <button id="zoom-in-button" type="button">Zoom +</button>
+          <button id="undo-button" type="button" disabled>Undo</button>
+          <span id="image-position-label" class="toolbar-label">Sin imagen</span>
+        </div>
         <p id="annotation-message" class="status-message" role="status" aria-live="polite"></p>
         <div id="annotation-stage" class="annotation-stage">
           <p id="stage-empty" class="empty-state">Selecciona una imagen para anotar.</p>

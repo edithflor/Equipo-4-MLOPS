@@ -72,3 +72,7 @@ Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com
    ```
 
    MinIO Console is available at `http://localhost:9001`.
+
+## Annotation Flow
+
+Open `http://localhost:3000`, upload or select a JPEG/PNG image, choose a category, and draw boxes on the image. The portal persists every create, move, resize, and delete through the annotation HTTP API. The zoom controls only change the visual scale, so stored coordinates remain in original image pixels. Use Undo to revert the latest create or geometry update, and use Anterior, Siguiente, or Guardar y siguiente to move through the real image list while each image reloads its saved annotations.

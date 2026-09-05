@@ -30,6 +30,21 @@ test("browser UI consumes HTTP APIs and does not reference storage or database d
   assert.doesNotMatch(uiSource, /mysql/i);
 });
 
+test("coco download UI only points to the export endpoint", async () => {
+  const html = await readFile(join(projectRoot, "public", "index.html"), "utf8");
+  const clientScript = await readFile(join(projectRoot, "public", "app.js"), "utf8");
+  const uiSource = `${html}\n${clientScript}`;
+
+  assert.match(html, /id="download-coco-link"/);
+  assert.match(html, /href="\/export\/coco"/);
+  assert.match(html, />Descargar COCO</);
+  assert.doesNotMatch(clientScript, /exportCocoDataset|cocoDataset|image_id|category_id|iscrowd/);
+  assert.doesNotMatch(clientScript, /bbox:\s*\[|area:\s*|file_name/);
+  assert.doesNotMatch(uiSource, /drizzle/i);
+  assert.doesNotMatch(uiSource, /minio/i);
+  assert.doesNotMatch(uiSource, /mysql/i);
+});
+
 test("bbox canvas UI uses annotation APIs for create, load, update, and delete", async () => {
   const clientScript = await readFile(join(projectRoot, "public", "app.js"), "utf8");
 

@@ -77,8 +77,17 @@ Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com
 
 Open `http://localhost:3000`, upload or select a JPEG/PNG image, choose a category, and draw boxes on the image. The portal persists every create, move, resize, and delete through the annotation HTTP API. The zoom controls only change the visual scale, so stored coordinates remain in original image pixels. Use Undo to revert the latest create or geometry update, and use Anterior, Siguiente, or Guardar y siguiente to move through the real image list while each image reloads its saved annotations.
 
+## COCO Export
+
+Use the Descargar COCO button in the portal or download the full dataset directly:
+
+```bash
+curl -OJ http://localhost:3000/export/coco
+```
+
 ## SPEC Traceability
 
 - `SPEC-F6-01` RED TDD stage: [features/f6-01-coco-contract.feature](features/f6-01-coco-contract.feature) -> [tests/cocoContract.test.ts](tests/cocoContract.test.ts). These tests define the COCO JSON contract and are expected to fail until the exporter is implemented in F6-02/F6-03.
 - `SPEC-F6-02` COCO sections and IDs: [features/f6-02-coco-sections-ids.feature](features/f6-02-coco-sections-ids.feature) -> [src/data/cocoExportRepository.ts](src/data/cocoExportRepository.ts) -> [src/logic/cocoExporter.ts](src/logic/cocoExporter.ts) -> [tests/cocoSectionsIds.test.ts](tests/cocoSectionsIds.test.ts). This stage exports and validates `images`, `annotations`, and `categories` with deterministic IDs and references; bbox geometry remains for F6-03.
 - `SPEC-F6-03` COCO bbox, area, and iscrowd: [features/f6-03-coco-bbox-area-iscrowd.feature](features/f6-03-coco-bbox-area-iscrowd.feature) -> [src/logic/cocoExporter.ts](src/logic/cocoExporter.ts) -> [tests/cocoGeometry.test.ts](tests/cocoGeometry.test.ts). This stage exports persisted absolute-pixel bbox geometry, calculates `area`, and sets `iscrowd`.
+- `SPEC-F6-04` COCO download: [features/f6-04-coco-download.feature](features/f6-04-coco-download.feature) -> [src/presentation/exportRoutes.ts](src/presentation/exportRoutes.ts) -> [tests/cocoDownload.test.ts](tests/cocoDownload.test.ts). This stage exposes `GET /export/coco` as an attachment download for the complete dataset.

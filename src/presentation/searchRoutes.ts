@@ -10,7 +10,7 @@ const searchService = new SearchService(searchRepository);
 
 searchRoutes.get("/", async (req, res) => {
   try {
-    const result = await searchService.search({ q: req.query.q });
+    const result = await searchService.search(req.query);
     return res.status(200).json(result);
   } catch (error) {
     if (error instanceof ZodError) {

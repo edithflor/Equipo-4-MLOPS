@@ -16,10 +16,18 @@ const categoryMessage = document.querySelector("#category-message");
 const selectedCategoryLabel = document.querySelector("#selected-category-label");
 const searchForm = document.querySelector("#search-form");
 const searchQueryInput = document.querySelector("#search-query");
+const searchStatusInput = document.querySelector("#search-status");
+const searchFromInput = document.querySelector("#search-from");
+const searchToInput = document.querySelector("#search-to");
+const searchLimitInput = document.querySelector("#search-limit");
 const searchButton = document.querySelector("#search-button");
+const clearSearchButton = document.querySelector("#clear-search-button");
 const searchMessage = document.querySelector("#search-message");
 const searchResults = document.querySelector("#search-results");
 const searchTotal = document.querySelector("#search-total");
+const searchPrevButton = document.querySelector("#search-prev-button");
+const searchNextButton = document.querySelector("#search-next-button");
+const searchPageLabel = document.querySelector("#search-page-label");
 const annotationStage = document.querySelector("#annotation-stage");
 const annotationMessage = document.querySelector("#annotation-message");
 const deleteBoxButton = document.querySelector("#delete-box-button");
@@ -49,6 +57,8 @@ let canvasLayer = null;
 let activePointer = null;
 let zoomLevel = 1;
 let historyStack = [];
+let searchPage = 1;
+let searchTotalPages = 1;
 
 function setStatus(message, type) {
   statusMessage.textContent = message;
@@ -275,9 +285,18 @@ function renderImages(nextImages) {
   updateControls();
 }
 
-function renderSearchResults(items, total) {
+function updateSearchPagination(total, page, limit) {
+  searchPage = page;
+  searchTotalPages = Math.max(1, Math.ceil(total / limit));
+  searchPageLabel.textContent = `Página ${page} de ${searchTotalPages}`;
+  searchPrevButton.disabled = page <= 1;
+  searchNextButton.disabled = page >= searchTotalPages;
+}
+
+function renderSearchResults(items, total, page, limit) {
   searchTotal.textContent = formatCount(total);
   searchResults.replaceChildren();
+  updateSearchPagination(total, page, limit);
 
   if (items.length === 0) {
     const emptyState = document.createElement("p");
@@ -305,6 +324,9 @@ function renderSearchResults(items, total) {
     const details = document.createElement("span");
     details.textContent = `${image.mimetype} · ${formatBytes(image.size)}`;
 
+    const createdAt = document.createElement("span");
+    createdAt.textContent = new Date(image.createdAt).toLocaleDateString("es-MX");
+
     const selectButton = document.createElement("button");
     selectButton.type = "button";
     selectButton.className = "prepare-annotation-button";
@@ -318,7 +340,7 @@ function renderSearchResults(items, total) {
       });
     });
 
-    meta.append(filename, details);
+    meta.append(filename, details, createdAt);
     card.append(preview, meta, selectButton);
     searchResults.append(card);
   }
@@ -534,8 +556,29 @@ async function loadDashboardMetrics() {
   setMetricsMessage("Métricas actualizadas desde la base de datos.", "success");
 }
 
-async function searchImages(query) {
-  const params = new URLSearchParams({ q: query });
+function appendSearchParam(params, key, value) {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length > 0) {
+    params.set(key, trimmedValue);
+  }
+}
+
+function buildSearchParams(page) {
+  const params = new URLSearchParams();
+
+  appendSearchParam(params, "q", searchQueryInput.value);
+  appendSearchParam(params, "status", searchStatusInput.value);
+  appendSearchParam(params, "from", searchFromInput.value);
+  appendSearchParam(params, "to", searchToInput.value);
+  appendSearchParam(params, "limit", searchLimitInput.value);
+  params.set("page", String(page));
+
+  return params;
+}
+
+async function searchImages(page = searchPage) {
+  const params = buildSearchParams(page);
   const response = await fetch(`/search?${params.toString()}`);
   const payload = await response.json();
 
@@ -543,7 +586,7 @@ async function searchImages(query) {
     throw new Error(payload.error || "No se pudo completar la búsqueda.");
   }
 
-  renderSearchResults(payload.items, payload.total);
+  renderSearchResults(payload.items, payload.total, payload.page, payload.limit);
   setSearchMessage("Búsqueda completada desde SQL.", "success");
 }
 
@@ -913,14 +956,35 @@ searchForm.addEventListener("submit", async (event) => {
   searchButton.disabled = true;
 
   try {
-    await searchImages(searchQueryInput.value);
+    await searchImages(1);
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo completar la búsqueda.";
-    renderSearchResults([], 0);
+    renderSearchResults([], 0, 1, Number(searchLimitInput.value) || 10);
     setSearchMessage(message, "error");
   } finally {
     searchButton.disabled = false;
   }
+});
+
+clearSearchButton.addEventListener("click", () => {
+  searchForm.reset();
+  searchLimitInput.value = "10";
+  renderSearchResults([], 0, 1, Number(searchLimitInput.value));
+  setSearchMessage("", "");
+});
+
+searchPrevButton.addEventListener("click", () => {
+  searchImages(searchPage - 1).catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudo completar la búsqueda.";
+    setSearchMessage(message, "error");
+  });
+});
+
+searchNextButton.addEventListener("click", () => {
+  searchImages(searchPage + 1).catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudo completar la búsqueda.";
+    setSearchMessage(message, "error");
+  });
 });
 
 refreshMetricsButton.addEventListener("click", () => {

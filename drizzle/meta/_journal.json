@@ -15,6 +15,13 @@
       "when": 1788556288080,
       "tag": "0001_loose_psynapse",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1788560000000,
+      "tag": "0002_images_created_at",
+      "breakpoints": true
     }
   ]
 }

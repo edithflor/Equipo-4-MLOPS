@@ -29,18 +29,19 @@ class CapturingSearchReader implements SearchReader {
           mimetype: "image/png",
           size: 1,
           url: "/images/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/content",
+          createdAt: new Date("2026-09-10T00:00:00.000Z"),
         },
       ],
       total: 1,
+      page: 1,
+      limit: 10,
     };
   }
 }
 
 test("search parser supports single class and AND case-insensitively", () => {
-  assert.deepEqual(parseSearchQuery({ q: " car " }), { terms: ["car"] });
-  assert.deepEqual(parseSearchQuery({ q: "  CAR   and   Person " }), {
-    terms: ["car", "person"],
-  });
+  assert.deepEqual(parseSearchQuery({ q: " car " }).terms, ["car"]);
+  assert.deepEqual(parseSearchQuery({ q: "  CAR   and   Person " }).terms, ["car", "person"]);
 });
 
 test("search parser rejects malformed AND queries", () => {
@@ -66,13 +67,16 @@ test("search service passes controlled AND terms to the SQL reader", async () =>
 
   assert.deepEqual(reader.terms, ["car", "person"]);
   assert.equal(result.total, 1);
+  assert.equal(result.page, 1);
+  assert.equal(result.limit, 10);
   assert.equal(result.items[0]?.filename, "image-a.png");
 });
 
 test("search repository resolves AND with SQL where group by and having", async () => {
   const source = await readFile(join(projectRoot, "src", "data", "searchRepository.ts"), "utf8");
 
-  assert.match(source, /where\(inArray\(lowerCategoryName, query\.terms\)\)/);
+  assert.match(source, /inArray\(lowerCategoryName, query\.terms\)/);
+  assert.match(source, /matchingImagesQuery\.where\(and\(\.\.\.whereConditions\)\)/);
   assert.match(source, /groupBy\(images\.id\)/);
   assert.match(source, /having\(sql`\$\{matchedCategoryCount\} = \$\{query\.terms\.length\}`\)/);
   assert.match(source, /count\(distinct lower\(\$\{categories\.name\}\)\)/);
@@ -84,6 +88,8 @@ test("search repository resolves AND with SQL where group by and having", async 
     source,
     /innerJoin\(matchingImagesForItems, eq\(images\.id, matchingImagesForItems\.imageId\)\)/,
   );
+  assert.match(source, /\.limit\(query\.limit\)/);
+  assert.match(source, /\.offset\(query\.offset\)/);
 });
 
 test("search repository does not load the dataset and filter in memory", async () => {
@@ -94,10 +100,11 @@ test("search repository does not load the dataset and filter in memory", async (
   assert.doesNotMatch(source, /\.filter\(/);
   assert.doesNotMatch(source, /\.every\(/);
   assert.doesNotMatch(source, /\.includes\(/);
+  assert.doesNotMatch(source, /\.slice\(/);
   assert.doesNotMatch(source, /sql\.raw/);
 });
 
-test("search endpoint is mounted and validates q through the HTTP API", async () => {
+test("search endpoint is mounted and validates query params through the HTTP API", async () => {
   const indexSource = await readFile(join(projectRoot, "src", "index.ts"), "utf8");
   const routeSource = await readFile(
     join(projectRoot, "src", "presentation", "searchRoutes.ts"),
@@ -107,7 +114,7 @@ test("search endpoint is mounted and validates q through the HTTP API", async ()
   assert.match(indexSource, /import \{ searchRoutes \}/);
   assert.match(indexSource, /app\.use\("\/search", searchRoutes\)/);
   assert.match(routeSource, /searchRoutes\.get\("\/"/);
-  assert.match(routeSource, /searchService\.search\(\{ q: req\.query\.q \}\)/);
+  assert.match(routeSource, /searchService\.search\(req\.query\)/);
   assert.match(routeSource, /error instanceof ZodError/);
   assert.match(routeSource, /status\(400\)/);
 });
@@ -120,7 +127,10 @@ test("search UI consumes the HTTP endpoint and avoids DB or storage imports", as
   assert.match(html, /id="search-form"/);
   assert.match(html, /id="search-results"/);
   assert.match(clientScript, /fetch\(`\/search\?\$\{params\.toString\(\)\}`\)/);
-  assert.match(clientScript, /renderSearchResults\(payload\.items, payload\.total\)/);
+  assert.match(
+    clientScript,
+    /renderSearchResults\(payload\.items, payload\.total, payload\.page, payload\.limit\)/,
+  );
   assert.doesNotMatch(publicSource, /drizzle/i);
   assert.doesNotMatch(publicSource, /mysql/i);
   assert.doesNotMatch(publicSource, /mariadb/i);

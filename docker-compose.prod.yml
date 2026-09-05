@@ -1,9 +1,19 @@
 services:
   app:
-    ports:
+    ports: !override
       - target: 3100
         published: "${PROD_APP_PORT}"
         protocol: tcp
         mode: ingress
+    environment:
+      - NODE_ENV=production
+      - APP_PORT=${APP_PORT}
+      - PROD_APP_PORT=${PROD_APP_PORT}
+
+  migrate:
+    environment:
+      - NODE_ENV=production
+
+  seed:
     environment:
       - NODE_ENV=production

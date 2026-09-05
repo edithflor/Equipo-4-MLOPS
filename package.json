@@ -16,7 +16,7 @@
     "check": "biome check .",
     "format": "biome format --write .",
     "test": "tsx --test \"tests/**/*.test.ts\"",
-    "up": "docker compose up -d"
+    "up": "docker compose up --build -d"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",

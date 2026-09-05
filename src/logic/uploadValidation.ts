@@ -1,23 +1,50 @@
 import { z } from "zod";
+import { env } from "../config/env.js";
 
-const MAX_BYTES = Number(process.env.UPLOAD_MAX_BYTES || 5242880);
-const ALLOWED_MIMES = (process.env.UPLOAD_MIME_ALLOWLIST || "image/jpeg,image/png").split(",");
+export interface UploadImageInput {
+  filename: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
 
-export const UploadImageSchema = z.object({
-  filename: z.string().min(1, "El nombre de archivo es obligatorio"),
-  mimetype: z.string().refine((val) => ALLOWED_MIMES.includes(val), {
-    message: "Tipo de archivo no permitido (mime inválido)",
-  }),
-  size: z.number().max(MAX_BYTES, "El tamaño del archivo excede el límite permitido"),
-  buffer: z.instanceof(Buffer),
-});
+export interface UploadValidationConfig {
+  maxBytes: number;
+  mimeAllowlist: string;
+}
 
-export type UploadImageInput = z.infer<typeof UploadImageSchema>;
+function parseMimeAllowlist(value: string): string[] {
+  return value
+    .split(",")
+    .map((mime) => mime.trim())
+    .filter(Boolean);
+}
+
 export class UploadValidationService {
+  private readonly schema: z.ZodType<UploadImageInput>;
+
+  public constructor(
+    config: UploadValidationConfig = {
+      maxBytes: env.UPLOAD_MAX_BYTES,
+      mimeAllowlist: env.UPLOAD_MIME_ALLOWLIST,
+    },
+  ) {
+    const allowedMimes = parseMimeAllowlist(config.mimeAllowlist);
+
+    this.schema = z.object({
+      filename: z.string().min(1, "El nombre de archivo es obligatorio"),
+      mimetype: z.string().refine((value) => allowedMimes.includes(value), {
+        message: "Tipo de archivo no permitido (mime inválido)",
+      }),
+      size: z.number().max(config.maxBytes, "El tamaño del archivo excede el límite permitido"),
+      buffer: z.instanceof(Buffer),
+    });
+  }
+
   public validate(payload: unknown): { success: boolean; data?: UploadImageInput; error?: string } {
-    const result = UploadImageSchema.safeParse(payload);
+    const result = this.schema.safeParse(payload);
+
     if (!result.success) {
-      // Extrae los mensajes de forma segura sea cual sea la versión de Zod
       const errorMsg =
         result.error?.issues?.map((e) => e.message).join(", ") ||
         result.error?.message ||

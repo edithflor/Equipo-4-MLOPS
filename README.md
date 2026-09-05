@@ -80,3 +80,4 @@ Open `http://localhost:3000`, upload or select a JPEG/PNG image, choose a catego
 ## SPEC Traceability
 
 - `SPEC-F6-01` RED TDD stage: [features/f6-01-coco-contract.feature](features/f6-01-coco-contract.feature) -> [tests/cocoContract.test.ts](tests/cocoContract.test.ts). These tests define the COCO JSON contract and are expected to fail until the exporter is implemented in F6-02/F6-03.
+- `SPEC-F6-02` COCO sections and IDs: [features/f6-02-coco-sections-ids.feature](features/f6-02-coco-sections-ids.feature) -> [src/data/cocoExportRepository.ts](src/data/cocoExportRepository.ts) -> [src/logic/cocoExporter.ts](src/logic/cocoExporter.ts) -> [tests/cocoSectionsIds.test.ts](tests/cocoSectionsIds.test.ts). This stage exports and validates `images`, `annotations`, and `categories` with deterministic IDs and references; bbox geometry remains for F6-03.

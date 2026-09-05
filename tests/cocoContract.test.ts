@@ -39,9 +39,9 @@ type CocoAnnotation = {
   id: number;
   image_id: number;
   category_id: number;
-  bbox: [number, number, number, number];
-  area: number;
-  iscrowd: number;
+  bbox?: [number, number, number, number];
+  area?: number;
+  iscrowd?: number;
 };
 
 type CocoDataset = {
@@ -123,7 +123,7 @@ function assertUniqueIds(collectionName: string, values: Array<{ id: number }>):
   assert.equal(uniqueIds.size, ids.length, `${collectionName} must have unique ids.`);
 }
 
-function assertCocoContract(dataset: CocoDataset): void {
+function assertCocoSectionsAndIds(dataset: CocoDataset): void {
   assert.ok(Array.isArray(dataset.images), "COCO dataset must include images[].");
   assert.ok(Array.isArray(dataset.annotations), "COCO dataset must include annotations[].");
   assert.ok(Array.isArray(dataset.categories), "COCO dataset must include categories[].");
@@ -144,6 +144,13 @@ function assertCocoContract(dataset: CocoDataset): void {
       categoryIds.has(annotation.category_id),
       `annotation ${annotation.id} references missing category_id ${annotation.category_id}.`,
     );
+  }
+}
+
+function assertCocoGeometryContract(dataset: CocoDataset): void {
+  assertCocoSectionsAndIds(dataset);
+
+  for (const annotation of dataset.annotations) {
     assert.deepEqual(
       annotation.bbox,
       [10, 20, 30, 40],
@@ -155,7 +162,9 @@ function assertCocoContract(dataset: CocoDataset): void {
       "bbox must not be normalized to the 0-1 range.",
     );
     assert.ok(
-      Math.abs(annotation.area - annotation.bbox[2] * annotation.bbox[3]) < 0.000001,
+      annotation.bbox &&
+        annotation.area !== undefined &&
+        Math.abs(annotation.area - annotation.bbox[2] * annotation.bbox[3]) < 0.000001,
       "area must be width * height.",
     );
     assert.ok(
@@ -168,7 +177,7 @@ function assertCocoContract(dataset: CocoDataset): void {
 test("F6-01 RED: exports parseable COCO JSON with images, annotations, and categories", async () => {
   const dataset = await exportControlledDataset();
 
-  assertCocoContract(dataset);
+  assertCocoSectionsAndIds(dataset);
 });
 
 test("F6-01 RED: annotation references point to existing images and categories", async () => {
@@ -177,13 +186,13 @@ test("F6-01 RED: annotation references point to existing images and categories",
 
   assert.equal(annotation.image_id, 101);
   assert.equal(annotation.category_id, 7);
-  assertCocoContract(dataset);
+  assertCocoSectionsAndIds(dataset);
 });
 
 test("F6-01 RED: ids are unique inside images, annotations, and categories", async () => {
   const dataset = await exportControlledDataset();
 
-  assertCocoContract(dataset);
+  assertCocoSectionsAndIds(dataset);
 });
 
 test("F6-01 RED: bbox is absolute [x, y, width, height], not normalized or xyxy", async () => {
@@ -219,5 +228,5 @@ test("F6-01 mutation guard rejects xyxy bbox semantics", () => {
     ],
   };
 
-  assert.throws(() => assertCocoContract(mutatedDataset), /width, height/);
+  assert.throws(() => assertCocoGeometryContract(mutatedDataset), /width, height/);
 });

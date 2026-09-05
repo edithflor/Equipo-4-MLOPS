@@ -30,6 +30,21 @@ test("browser UI consumes HTTP APIs and does not reference storage or database d
   assert.doesNotMatch(uiSource, /mysql/i);
 });
 
+test("bbox canvas UI uses annotation APIs for create, load, update, and delete", async () => {
+  const clientScript = await readFile(join(projectRoot, "public", "app.js"), "utf8");
+
+  assert.match(clientScript, /fetch\("\/annotations"/);
+  assert.match(clientScript, /fetch\(`\/annotations\/image\/\$\{imageId\}`\)/);
+  assert.match(clientScript, /fetch\(`\/annotations\/\$\{annotation\.id\}`/);
+  assert.match(clientScript, /fetch\(`\/annotations\/\$\{selectedAnnotationId\}`/);
+  assert.match(clientScript, /method: "POST"/);
+  assert.match(clientScript, /method: "PUT"/);
+  assert.match(clientScript, /method: "DELETE"/);
+  assert.match(clientScript, /displayToImageBox/);
+  assert.match(clientScript, /imageToDisplayBox/);
+  assert.match(clientScript, /Selecciona una categoría antes de crear una caja/);
+});
+
 test("category UI uses backend colors and keeps no category selected by default", async () => {
   const html = await readFile(join(projectRoot, "public", "index.html"), "utf8");
   const clientScript = await readFile(join(projectRoot, "public", "app.js"), "utf8");

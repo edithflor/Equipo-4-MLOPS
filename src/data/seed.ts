@@ -73,22 +73,29 @@ async function seed() {
           id: "33333333-3333-4333-8333-333333333333",
           imageId: seedImages[0].id,
           categoryId: 1,
-          x: 10,
-          y: 10,
-          width: 100,
-          height: 100,
+          x: 0.2,
+          y: 0.2,
+          width: 1,
+          height: 1,
         },
         {
           id: "44444444-4444-4444-8444-444444444444",
           imageId: seedImages[1].id,
           categoryId: 2,
-          x: 50,
-          y: 50,
-          width: 200,
-          height: 150,
+          x: 0.1,
+          y: 0.1,
+          width: 0.8,
+          height: 0.8,
         },
       ])
-      .onDuplicateKeyUpdate({ set: { id: sql`id` } });
+      .onDuplicateKeyUpdate({
+        set: {
+          x: sql`values(x)`,
+          y: sql`values(y)`,
+          width: sql`values(width)`,
+          height: sql`values(height)`,
+        },
+      });
     console.log("Bounding boxes de ejemplo verificadas.");
 
     console.log("Seeder ejecutado con éxito.");

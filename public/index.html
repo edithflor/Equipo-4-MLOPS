@@ -44,6 +44,17 @@
         </div>
         <div id="image-list" class="image-grid"></div>
       </section>
+
+      <section class="annotation-panel" aria-labelledby="annotation-title">
+        <div class="viewer-header">
+          <h2 id="annotation-title">Canvas de anotación</h2>
+          <button id="delete-box-button" type="button" disabled>Eliminar caja</button>
+        </div>
+        <p id="annotation-message" class="status-message" role="status" aria-live="polite"></p>
+        <div id="annotation-stage" class="annotation-stage">
+          <p id="stage-empty" class="empty-state">Selecciona una imagen para anotar.</p>
+        </div>
+      </section>
     </main>
 
     <script src="/app.js" type="module"></script>

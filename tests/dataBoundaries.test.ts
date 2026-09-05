@@ -24,9 +24,31 @@ test("browser UI consumes HTTP APIs and does not reference storage or database d
   assert.match(html, /accept="image\/jpeg,image\/png"/);
   assert.match(clientScript, /fetch\("\/upload"/);
   assert.match(clientScript, /fetch\("\/images"/);
+  assert.match(clientScript, /fetch\("\/categories"/);
   assert.doesNotMatch(uiSource, /minio/i);
   assert.doesNotMatch(uiSource, /drizzle/i);
   assert.doesNotMatch(uiSource, /mysql/i);
+});
+
+test("category UI uses backend colors and keeps no category selected by default", async () => {
+  const html = await readFile(join(projectRoot, "public", "index.html"), "utf8");
+  const clientScript = await readFile(join(projectRoot, "public", "app.js"), "utf8");
+  const styles = await readFile(join(projectRoot, "public", "styles.css"), "utf8");
+
+  assert.match(html, /id="category-list"/);
+  assert.match(html, /Sin categoría/);
+  assert.match(clientScript, /let selectedCategory = null/);
+  assert.match(clientScript, /category\.color/);
+  assert.match(clientScript, /Selecciona una categoría antes de crear una caja/);
+  assert.match(styles, /--category-color/);
+  assert.doesNotMatch(styles, /#e74c3c|#3498db|#2ecc71/);
+});
+
+test("server mounts category routes for the portal", async () => {
+  const source = await readFile(join(projectRoot, "src", "index.ts"), "utf8");
+
+  assert.match(source, /import \{ categoryRoutes \}/);
+  assert.match(source, /app\.use\("\/categories", categoryRoutes\)/);
 });
 
 test("image presentation routes list persisted images and proxy bytes through the backend", async () => {

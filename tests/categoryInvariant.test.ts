@@ -25,6 +25,7 @@ test("bbox sin categoryId debe rechazarse", () => {
     height: 100,
   });
   assert.strictEqual(result.success, false);
+  assert.match(result.error.issues[0].message, /categoría/i);
 });
 
 test("bbox con categoryId null debe rechazarse", () => {

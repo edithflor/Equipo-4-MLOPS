@@ -25,6 +25,7 @@ input {
 }
 
 .upload-panel,
+.category-panel,
 .viewer {
   border: 1px solid #d8dee9;
   border-radius: 8px;
@@ -32,6 +33,7 @@ input {
   padding: 24px;
 }
 
+.category-panel,
 .viewer {
   margin-top: 20px;
 }
@@ -94,6 +96,44 @@ button:disabled {
   opacity: 0.7;
 }
 
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.category-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #d8dee9;
+  border-radius: 6px;
+  padding: 9px 12px;
+  background: #ffffff;
+  color: #17202a;
+}
+
+.category-option.selected {
+  border-color: var(--category-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--category-color) 24%, transparent);
+}
+
+.category-swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #52616f;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.selected-category {
+  border: 1px solid #d8dee9;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-weight: 700;
+}
+
 .status-message {
   min-height: 24px;
   margin: 16px 0 0;
@@ -148,6 +188,12 @@ button:disabled {
 
 .image-meta {
   padding: 12px;
+}
+
+.prepare-annotation-button {
+  width: calc(100% - 24px);
+  margin: 0 12px 12px;
+  background: #334e68;
 }
 
 .image-meta strong,

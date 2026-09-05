@@ -4,10 +4,32 @@ const button = document.querySelector("#upload-button");
 const statusMessage = document.querySelector("#status-message");
 const imageList = document.querySelector("#image-list");
 const imageCount = document.querySelector("#image-count");
+const categoryList = document.querySelector("#category-list");
+const categoryMessage = document.querySelector("#category-message");
+const selectedCategoryLabel = document.querySelector("#selected-category-label");
+
+let categories = [];
+let selectedCategory = null;
 
 function setStatus(message, type) {
   statusMessage.textContent = message;
   statusMessage.className = `status-message ${type}`;
+}
+
+function setCategoryMessage(message, type) {
+  categoryMessage.textContent = message;
+  categoryMessage.className = `status-message ${type}`;
+}
+
+function updateSelectedCategory(category) {
+  selectedCategory = category;
+  selectedCategoryLabel.textContent = category ? category.name : "Sin categoría";
+
+  for (const option of categoryList.querySelectorAll(".category-option")) {
+    const isSelected = category !== null && option.dataset.categoryId === String(category.id);
+    option.setAttribute("aria-checked", String(isSelected));
+    option.classList.toggle("selected", isSelected);
+  }
 }
 
 function formatBytes(size) {
@@ -16,6 +38,41 @@ function formatBytes(size) {
   }
 
   return `${(size / 1024).toFixed(1)} KB`;
+}
+
+function renderCategories(nextCategories) {
+  categories = nextCategories;
+  categoryList.replaceChildren();
+
+  if (categories.length === 0) {
+    setCategoryMessage("No hay categorías disponibles.", "error");
+    updateSelectedCategory(null);
+    return;
+  }
+
+  for (const category of categories) {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "category-option";
+    option.dataset.categoryId = String(category.id);
+    option.setAttribute("role", "radio");
+    option.setAttribute("aria-checked", "false");
+    option.style.setProperty("--category-color", category.color);
+
+    const swatch = document.createElement("span");
+    swatch.className = "category-swatch";
+    swatch.style.backgroundColor = category.color;
+
+    const name = document.createElement("span");
+    name.textContent = category.name;
+
+    option.append(swatch, name);
+    option.addEventListener("click", () => {
+      updateSelectedCategory(category);
+      setCategoryMessage(`Categoría seleccionada: ${category.name}.`, "success");
+    });
+    categoryList.append(option);
+  }
 }
 
 function renderImages(images) {
@@ -47,8 +104,25 @@ function renderImages(images) {
     const details = document.createElement("span");
     details.textContent = `${image.mimetype} · ${formatBytes(image.size)}`;
 
+    const prepareButton = document.createElement("button");
+    prepareButton.type = "button";
+    prepareButton.className = "prepare-annotation-button";
+    prepareButton.textContent = "Preparar caja";
+    prepareButton.addEventListener("click", () => {
+      if (!selectedCategory) {
+        setCategoryMessage("Selecciona una categoría antes de crear una caja.", "error");
+        return;
+      }
+
+      card.style.borderColor = selectedCategory.color;
+      setCategoryMessage(
+        `Caja preparada para ${image.filename} con categoría ${selectedCategory.name}.`,
+        "success",
+      );
+    });
+
     meta.append(filename, details);
-    card.append(preview, meta);
+    card.append(preview, meta, prepareButton);
     imageList.append(card);
   }
 }
@@ -62,6 +136,17 @@ async function loadImages() {
   }
 
   renderImages(payload.images);
+}
+
+async function loadCategories() {
+  const response = await fetch("/categories");
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "No se pudieron cargar las categorías.");
+  }
+
+  renderCategories(payload);
 }
 
 form.addEventListener("submit", async (event) => {
@@ -103,4 +188,9 @@ form.addEventListener("submit", async (event) => {
 loadImages().catch((error) => {
   const message = error instanceof Error ? error.message : "No se pudieron cargar las imágenes.";
   setStatus(message, "error");
+});
+
+loadCategories().catch((error) => {
+  const message = error instanceof Error ? error.message : "No se pudieron cargar las categorías.";
+  setCategoryMessage(message, "error");
 });

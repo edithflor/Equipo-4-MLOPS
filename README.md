@@ -41,6 +41,7 @@ Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com
 2. **Install dependencies:**
    ```bash
    npm ci
+   npm run format
    ```
 
 3. **Run verification commands:**

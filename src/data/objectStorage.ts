@@ -16,6 +16,14 @@ export function buildObjectUrl(objectName: string): string {
   return `${protocol}://${env.MINIO_ENDPOINT}:${env.MINIO_PORT}/${bucketName}/${objectName}`;
 }
 
+export function buildImageContentPath(imageId: string): string {
+  return `/images/${imageId}/content`;
+}
+
+export function buildImageObjectName(data: { id: string; filename: string }): string {
+  return `${data.id}-${data.filename}`;
+}
+
 export async function ensureBucketExists(): Promise<void> {
   const exists = await objectStorageClient.bucketExists(bucketName);
 
@@ -50,6 +58,16 @@ export async function putImageObjectIfMissing(data: {
     return;
   }
 
+  await putImageObject(data);
+}
+
+export async function putImageObject(data: {
+  objectName: string;
+  buffer: Buffer;
+  mimetype: string;
+}): Promise<void> {
+  await ensureBucketExists();
+
   await objectStorageClient.putObject(
     bucketName,
     data.objectName,
@@ -59,4 +77,8 @@ export async function putImageObjectIfMissing(data: {
       "Content-Type": data.mimetype,
     },
   );
+}
+
+export async function getImageObject(objectName: string): Promise<NodeJS.ReadableStream> {
+  return objectStorageClient.getObject(bucketName, objectName);
 }

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portal de anotación</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="upload-panel" aria-labelledby="upload-title">
+        <div>
+          <p class="eyebrow">Fase 4</p>
+          <h1 id="upload-title">Portal de anotación</h1>
+        </div>
+
+        <form id="upload-form" class="upload-form">
+          <label class="file-label" for="image-input">Imagen JPEG o PNG</label>
+          <input id="image-input" name="image" type="file" accept="image/jpeg,image/png" />
+          <button id="upload-button" type="submit">Cargar imagen</button>
+        </form>
+
+        <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="category-panel" aria-labelledby="category-title">
+        <div class="viewer-header">
+          <h2 id="category-title">Categoría para la caja</h2>
+          <span id="selected-category-label" class="selected-category">Sin categoría</span>
+        </div>
+        <div
+          id="category-list"
+          class="category-list"
+          role="radiogroup"
+          aria-label="Categorías disponibles"
+        ></div>
+        <p id="category-message" class="status-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="viewer" aria-labelledby="images-title">
+        <div class="viewer-header">
+          <h2 id="images-title">Imágenes listas para anotar</h2>
+          <span id="image-count" class="image-count">0</span>
+        </div>
+        <div id="image-list" class="image-grid"></div>
+      </section>
+
+      <section class="annotation-panel" aria-labelledby="annotation-title">
+        <div class="viewer-header">
+          <h2 id="annotation-title">Canvas de anotación</h2>
+          <button id="delete-box-button" type="button" disabled>Eliminar caja</button>
+        </div>
+        <div class="annotation-toolbar" aria-label="Controles de anotación">
+          <button id="previous-image-button" type="button">Anterior</button>
+          <button id="next-image-button" type="button">Siguiente</button>
+          <button id="save-next-button" type="button">Guardar y siguiente</button>
+          <button id="zoom-out-button" type="button">Zoom -</button>
+          <span id="zoom-label" class="toolbar-label">100%</span>
+          <button id="zoom-in-button" type="button">Zoom +</button>
+          <button id="undo-button" type="button" disabled>Undo</button>
+          <span id="image-position-label" class="toolbar-label">Sin imagen</span>
+        </div>
+        <p id="annotation-message" class="status-message" role="status" aria-live="polite"></p>
+        <div id="annotation-stage" class="annotation-stage">
+          <p id="stage-empty" class="empty-state">Selecciona una imagen para anotar.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

@@ -4,7 +4,9 @@ export const BoundingBoxSchema = z.object({
   id: z.string().uuid().optional(),
   imageId: z.string().uuid(),
   categoryId: z
-    .number()
+    .number({
+      error: "Toda caja debe pertenecer a una categoría válida (Cero cajas sin categoría)",
+    })
     .int()
     .positive("Toda caja debe pertenecer a una categoría válida (Cero cajas sin categoría)"),
   x: z.number().min(0, "La coordenada X debe ser positiva (píxeles absolutos)"),

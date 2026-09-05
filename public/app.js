@@ -9,6 +9,8 @@ const imageCount = document.querySelector("#image-count");
 const metricsGrid = document.querySelector("#dashboard-metrics");
 const metricsMessage = document.querySelector("#metrics-message");
 const refreshMetricsButton = document.querySelector("#refresh-metrics-button");
+const objectsByCategoryChart = document.querySelector("#objects-by-category-chart");
+const annotationProgressChart = document.querySelector("#annotation-progress-chart");
 const categoryList = document.querySelector("#category-list");
 const categoryMessage = document.querySelector("#category-message");
 const selectedCategoryLabel = document.querySelector("#selected-category-label");
@@ -122,6 +124,10 @@ function formatBytes(size) {
   }
 
   return `${(size / 1024).toFixed(1)} KB`;
+}
+
+function formatCount(value) {
+  return new Intl.NumberFormat("es-MX").format(value);
 }
 
 function getCategory(categoryId) {
@@ -256,6 +262,60 @@ function renderImages(nextImages) {
   }
 
   updateControls();
+}
+
+function renderObjectsByCategory(objectsByCategory) {
+  objectsByCategoryChart.replaceChildren();
+
+  if (objectsByCategory.length === 0) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "empty-state";
+    emptyState.textContent = "Sin objetos anotados.";
+    objectsByCategoryChart.append(emptyState);
+    return;
+  }
+
+  const maxCount = Math.max(...objectsByCategory.map((category) => category.count));
+
+  for (const category of objectsByCategory) {
+    const row = document.createElement("article");
+    row.className = "category-bar-row";
+    row.style.setProperty("--category-color", category.categoryColor);
+
+    const label = document.createElement("span");
+    label.className = "category-bar-label";
+    label.textContent = category.categoryName;
+
+    const track = document.createElement("span");
+    track.className = "category-bar-track";
+
+    const bar = document.createElement("span");
+    bar.className = "category-bar-fill";
+    bar.style.width = `${(category.count / maxCount) * 100}%`;
+
+    const value = document.createElement("strong");
+    value.className = "category-bar-value";
+    value.textContent = formatCount(category.count);
+
+    track.append(bar);
+    row.append(label, track, value);
+    objectsByCategoryChart.append(row);
+  }
+}
+
+function renderAnnotationProgress(annotationProgress) {
+  const totalImages = annotationProgress.totalImages;
+  const annotatedPercent =
+    totalImages === 0 ? 0 : (annotationProgress.annotated / totalImages) * 100;
+  const pendingPercent = totalImages === 0 ? 0 : (annotationProgress.pending / totalImages) * 100;
+
+  annotationProgressChart.style.setProperty("--annotated-percent", `${annotatedPercent}%`);
+  annotationProgressChart.style.setProperty("--pending-percent", `${pendingPercent}%`);
+  annotationProgressChart.querySelector("[data-progress-annotated-label]").textContent =
+    formatCount(annotationProgress.annotated);
+  annotationProgressChart.querySelector("[data-progress-pending-label]").textContent = formatCount(
+    annotationProgress.pending,
+  );
 }
 
 function renderAnnotation(annotation) {
@@ -405,10 +465,12 @@ async function loadDashboardMetrics() {
     const value = metric.querySelector("[data-metric-value]");
 
     if (value && Object.hasOwn(payload, key)) {
-      value.textContent = new Intl.NumberFormat("es-MX").format(payload[key]);
+      value.textContent = formatCount(payload[key]);
     }
   }
 
+  renderObjectsByCategory(payload.objectsByCategory);
+  renderAnnotationProgress(payload.annotationProgress);
   setMetricsMessage("Métricas actualizadas desde la base de datos.", "success");
 }
 

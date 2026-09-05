@@ -50,6 +50,31 @@
             <strong data-metric-value>...</strong>
           </article>
         </div>
+        <div class="dashboard-charts">
+          <section class="chart-panel" aria-labelledby="objects-by-category-title">
+            <h3 id="objects-by-category-title">Objetos por clase</h3>
+            <div id="objects-by-category-chart" class="category-chart"></div>
+          </section>
+          <section class="chart-panel" aria-labelledby="annotation-progress-title">
+            <h3 id="annotation-progress-title">Progreso de anotación</h3>
+            <div id="annotation-progress-chart" class="progress-chart">
+              <div class="progress-track">
+                <span class="progress-segment annotated" data-progress-annotated></span>
+                <span class="progress-segment pending" data-progress-pending></span>
+              </div>
+              <dl class="progress-legend">
+                <div>
+                  <dt>Anotadas</dt>
+                  <dd data-progress-annotated-label>...</dd>
+                </div>
+                <div>
+                  <dt>Pendientes</dt>
+                  <dd data-progress-pending-label>...</dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+        </div>
         <p id="metrics-message" class="status-message" role="status" aria-live="polite"></p>
       </section>
 

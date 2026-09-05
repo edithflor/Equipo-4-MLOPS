@@ -76,3 +76,7 @@ Requires [Node.js](https://nodejs.org/) v20+ and [Docker](https://www.docker.com
 ## Annotation Flow
 
 Open `http://localhost:3000`, upload or select a JPEG/PNG image, choose a category, and draw boxes on the image. The portal persists every create, move, resize, and delete through the annotation HTTP API. The zoom controls only change the visual scale, so stored coordinates remain in original image pixels. Use Undo to revert the latest create or geometry update, and use Anterior, Siguiente, or Guardar y siguiente to move through the real image list while each image reloads its saved annotations.
+
+## SPEC Traceability
+
+- `SPEC-F6-01` RED TDD stage: [features/f6-01-coco-contract.feature](features/f6-01-coco-contract.feature) -> [tests/cocoContract.test.ts](tests/cocoContract.test.ts). These tests define the COCO JSON contract and are expected to fail until the exporter is implemented in F6-02/F6-03.

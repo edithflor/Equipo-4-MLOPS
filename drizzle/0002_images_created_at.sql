@@ -1,0 +1,1 @@
+ALTER TABLE `images` ADD `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP;

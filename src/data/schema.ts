@@ -1,4 +1,4 @@
-import { float, int, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+import { float, int, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 export const categories = mysqlTable("categories", {
   id: int("id").primaryKey().autoincrement(),
@@ -12,6 +12,7 @@ export const images = mysqlTable("images", {
   mimetype: varchar("mimetype", { length: 100 }).notNull(),
   size: int("size").notNull(),
   url: varchar("url", { length: 512 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const bboxes = mysqlTable("bboxes", {

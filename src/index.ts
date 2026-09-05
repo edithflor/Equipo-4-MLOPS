@@ -3,7 +3,9 @@ import express from "express";
 import { env } from "./config/env.js";
 import { annotationRoutes } from "./presentation/annotationRoutes.js";
 import { categoryRoutes } from "./presentation/categoryRoutes.js";
+import { dashboardRoutes } from "./presentation/dashboardRoutes.js";
 import { imageRoutes } from "./presentation/imageRoutes.js";
+import { searchRoutes } from "./presentation/searchRoutes.js";
 import { uploadRoutes } from "./presentation/uploadRoutes.js";
 
 const app = express();
@@ -15,7 +17,9 @@ app.use(express.static("public"));
 // Rutas
 app.use("/annotations", annotationRoutes);
 app.use("/categories", categoryRoutes);
+app.use("/dashboard", dashboardRoutes);
 app.use("/images", imageRoutes);
+app.use("/search", searchRoutes);
 app.use("/upload", uploadRoutes);
 
 // Healthcheck

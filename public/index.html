@@ -23,6 +23,61 @@
         <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
       </section>
 
+      <section class="dashboard-panel" aria-labelledby="dashboard-title">
+        <div class="viewer-header">
+          <h2 id="dashboard-title">Métricas del dashboard</h2>
+          <button id="refresh-metrics-button" type="button">Actualizar</button>
+        </div>
+        <div id="dashboard-metrics" class="metrics-grid" aria-live="polite">
+          <article class="metric-card" data-metric-key="totalImages">
+            <span>Total imágenes</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="totalAnnotations">
+            <span>Total anotaciones</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="totalCategories">
+            <span>Total categorías</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="annotatedImages">
+            <span>Anotadas</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="pendingImages">
+            <span>Pendientes</span>
+            <strong data-metric-value>...</strong>
+          </article>
+        </div>
+        <div class="dashboard-charts">
+          <section class="chart-panel" aria-labelledby="objects-by-category-title">
+            <h3 id="objects-by-category-title">Objetos por clase</h3>
+            <div id="objects-by-category-chart" class="category-chart"></div>
+          </section>
+          <section class="chart-panel" aria-labelledby="annotation-progress-title">
+            <h3 id="annotation-progress-title">Progreso de anotación</h3>
+            <div id="annotation-progress-chart" class="progress-chart">
+              <div class="progress-track">
+                <span class="progress-segment annotated" data-progress-annotated></span>
+                <span class="progress-segment pending" data-progress-pending></span>
+              </div>
+              <dl class="progress-legend">
+                <div>
+                  <dt>Anotadas</dt>
+                  <dd data-progress-annotated-label>...</dd>
+                </div>
+                <div>
+                  <dt>Pendientes</dt>
+                  <dd data-progress-pending-label>...</dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+        </div>
+        <p id="metrics-message" class="status-message" role="status" aria-live="polite"></p>
+      </section>
+
       <section class="category-panel" aria-labelledby="category-title">
         <div class="viewer-header">
           <h2 id="category-title">Categoría para la caja</h2>
@@ -35,6 +90,38 @@
           aria-label="Categorías disponibles"
         ></div>
         <p id="category-message" class="status-message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="search-panel" aria-labelledby="search-title">
+        <div class="viewer-header">
+          <h2 id="search-title">Búsqueda por clases</h2>
+          <span id="search-total" class="image-count">0</span>
+        </div>
+        <form id="search-form" class="search-form">
+          <label class="file-label" for="search-query">Clases con AND</label>
+          <input id="search-query" name="q" type="search" placeholder="car AND person" />
+          <label class="file-label" for="search-status">Estado</label>
+          <select id="search-status" name="status">
+            <option value="">Todas</option>
+            <option value="annotated">Anotadas</option>
+            <option value="pending">Pendientes</option>
+          </select>
+          <label class="file-label" for="search-from">Desde</label>
+          <input id="search-from" name="from" type="date" />
+          <label class="file-label" for="search-to">Hasta</label>
+          <input id="search-to" name="to" type="date" />
+          <label class="file-label" for="search-limit">Por página</label>
+          <input id="search-limit" name="limit" type="number" min="1" max="50" value="10" />
+          <button id="search-button" type="submit">Buscar</button>
+          <button id="clear-search-button" type="button">Limpiar</button>
+        </form>
+        <p id="search-message" class="status-message" role="status" aria-live="polite"></p>
+        <div id="search-results" class="image-grid"></div>
+        <div class="pagination-controls">
+          <button id="search-prev-button" type="button" disabled>Anterior</button>
+          <span id="search-page-label" class="toolbar-label">Página 1 de 1</span>
+          <button id="search-next-button" type="button" disabled>Siguiente</button>
+        </div>
       </section>
 
       <section class="viewer" aria-labelledby="images-title">

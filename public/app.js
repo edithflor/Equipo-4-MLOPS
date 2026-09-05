@@ -6,9 +6,28 @@ const button = document.querySelector("#upload-button");
 const statusMessage = document.querySelector("#status-message");
 const imageList = document.querySelector("#image-list");
 const imageCount = document.querySelector("#image-count");
+const metricsGrid = document.querySelector("#dashboard-metrics");
+const metricsMessage = document.querySelector("#metrics-message");
+const refreshMetricsButton = document.querySelector("#refresh-metrics-button");
+const objectsByCategoryChart = document.querySelector("#objects-by-category-chart");
+const annotationProgressChart = document.querySelector("#annotation-progress-chart");
 const categoryList = document.querySelector("#category-list");
 const categoryMessage = document.querySelector("#category-message");
 const selectedCategoryLabel = document.querySelector("#selected-category-label");
+const searchForm = document.querySelector("#search-form");
+const searchQueryInput = document.querySelector("#search-query");
+const searchStatusInput = document.querySelector("#search-status");
+const searchFromInput = document.querySelector("#search-from");
+const searchToInput = document.querySelector("#search-to");
+const searchLimitInput = document.querySelector("#search-limit");
+const searchButton = document.querySelector("#search-button");
+const clearSearchButton = document.querySelector("#clear-search-button");
+const searchMessage = document.querySelector("#search-message");
+const searchResults = document.querySelector("#search-results");
+const searchTotal = document.querySelector("#search-total");
+const searchPrevButton = document.querySelector("#search-prev-button");
+const searchNextButton = document.querySelector("#search-next-button");
+const searchPageLabel = document.querySelector("#search-page-label");
 const annotationStage = document.querySelector("#annotation-stage");
 const annotationMessage = document.querySelector("#annotation-message");
 const deleteBoxButton = document.querySelector("#delete-box-button");
@@ -38,6 +57,8 @@ let canvasLayer = null;
 let activePointer = null;
 let zoomLevel = 1;
 let historyStack = [];
+let searchPage = 1;
+let searchTotalPages = 1;
 
 function setStatus(message, type) {
   statusMessage.textContent = message;
@@ -47,6 +68,16 @@ function setStatus(message, type) {
 function setCategoryMessage(message, type) {
   categoryMessage.textContent = message;
   categoryMessage.className = `status-message ${type}`;
+}
+
+function setMetricsMessage(message, type) {
+  metricsMessage.textContent = message;
+  metricsMessage.className = `status-message ${type}`;
+}
+
+function setSearchMessage(message, type) {
+  searchMessage.textContent = message;
+  searchMessage.className = `status-message ${type}`;
 }
 
 function setAnnotationMessage(message, type) {
@@ -114,6 +145,10 @@ function formatBytes(size) {
   }
 
   return `${(size / 1024).toFixed(1)} KB`;
+}
+
+function formatCount(value) {
+  return new Intl.NumberFormat("es-MX").format(value);
 }
 
 function getCategory(categoryId) {
@@ -250,6 +285,121 @@ function renderImages(nextImages) {
   updateControls();
 }
 
+function updateSearchPagination(total, page, limit) {
+  searchPage = page;
+  searchTotalPages = Math.max(1, Math.ceil(total / limit));
+  searchPageLabel.textContent = `Página ${page} de ${searchTotalPages}`;
+  searchPrevButton.disabled = page <= 1;
+  searchNextButton.disabled = page >= searchTotalPages;
+}
+
+function renderSearchResults(items, total, page, limit) {
+  searchTotal.textContent = formatCount(total);
+  searchResults.replaceChildren();
+  updateSearchPagination(total, page, limit);
+
+  if (items.length === 0) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "empty-state";
+    emptyState.textContent = "Sin imágenes para esa búsqueda.";
+    searchResults.append(emptyState);
+    return;
+  }
+
+  for (const image of items) {
+    const card = document.createElement("article");
+    card.className = "image-card";
+    card.dataset.imageId = image.id;
+
+    const preview = document.createElement("img");
+    preview.src = image.url;
+    preview.alt = `Resultado ${image.filename}`;
+
+    const meta = document.createElement("div");
+    meta.className = "image-meta";
+
+    const filename = document.createElement("strong");
+    filename.textContent = image.filename;
+
+    const details = document.createElement("span");
+    details.textContent = `${image.mimetype} · ${formatBytes(image.size)}`;
+
+    const createdAt = document.createElement("span");
+    createdAt.textContent = new Date(image.createdAt).toLocaleDateString("es-MX");
+
+    const selectButton = document.createElement("button");
+    selectButton.type = "button";
+    selectButton.className = "prepare-annotation-button";
+    selectButton.textContent = "Seleccionar para anotar";
+    selectButton.addEventListener("click", () => {
+      const fullImage = images.find((item) => item.id === image.id) || image;
+      selectImage(fullImage).catch((error) => {
+        const message =
+          error instanceof Error ? error.message : "No se pudo seleccionar la imagen.";
+        setAnnotationMessage(message, "error");
+      });
+    });
+
+    meta.append(filename, details, createdAt);
+    card.append(preview, meta, selectButton);
+    searchResults.append(card);
+  }
+}
+
+function renderObjectsByCategory(objectsByCategory) {
+  objectsByCategoryChart.replaceChildren();
+
+  if (objectsByCategory.length === 0) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "empty-state";
+    emptyState.textContent = "Sin objetos anotados.";
+    objectsByCategoryChart.append(emptyState);
+    return;
+  }
+
+  const maxCount = Math.max(...objectsByCategory.map((category) => category.count));
+
+  for (const category of objectsByCategory) {
+    const row = document.createElement("article");
+    row.className = "category-bar-row";
+    row.style.setProperty("--category-color", category.categoryColor);
+
+    const label = document.createElement("span");
+    label.className = "category-bar-label";
+    label.textContent = category.categoryName;
+
+    const track = document.createElement("span");
+    track.className = "category-bar-track";
+
+    const bar = document.createElement("span");
+    bar.className = "category-bar-fill";
+    bar.style.width = `${(category.count / maxCount) * 100}%`;
+
+    const value = document.createElement("strong");
+    value.className = "category-bar-value";
+    value.textContent = formatCount(category.count);
+
+    track.append(bar);
+    row.append(label, track, value);
+    objectsByCategoryChart.append(row);
+  }
+}
+
+function renderAnnotationProgress(annotationProgress) {
+  const totalImages = annotationProgress.totalImages;
+  const annotatedPercent =
+    totalImages === 0 ? 0 : (annotationProgress.annotated / totalImages) * 100;
+  const pendingPercent = totalImages === 0 ? 0 : (annotationProgress.pending / totalImages) * 100;
+
+  annotationProgressChart.style.setProperty("--annotated-percent", `${annotatedPercent}%`);
+  annotationProgressChart.style.setProperty("--pending-percent", `${pendingPercent}%`);
+  annotationProgressChart.querySelector("[data-progress-annotated-label]").textContent =
+    formatCount(annotationProgress.annotated);
+  annotationProgressChart.querySelector("[data-progress-pending-label]").textContent = formatCount(
+    annotationProgress.pending,
+  );
+}
+
 function renderAnnotation(annotation) {
   const category = getCategory(annotation.categoryId);
   const color = category?.color || "#1f7a8c";
@@ -382,6 +532,62 @@ async function loadCategories() {
   }
 
   renderCategories(payload);
+}
+
+async function loadDashboardMetrics() {
+  const response = await fetch("/dashboard/metrics");
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "No se pudieron cargar las métricas.");
+  }
+
+  for (const metric of metricsGrid.querySelectorAll("[data-metric-key]")) {
+    const key = metric.dataset.metricKey;
+    const value = metric.querySelector("[data-metric-value]");
+
+    if (value && Object.hasOwn(payload, key)) {
+      value.textContent = formatCount(payload[key]);
+    }
+  }
+
+  renderObjectsByCategory(payload.objectsByCategory);
+  renderAnnotationProgress(payload.annotationProgress);
+  setMetricsMessage("Métricas actualizadas desde la base de datos.", "success");
+}
+
+function appendSearchParam(params, key, value) {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue.length > 0) {
+    params.set(key, trimmedValue);
+  }
+}
+
+function buildSearchParams(page) {
+  const params = new URLSearchParams();
+
+  appendSearchParam(params, "q", searchQueryInput.value);
+  appendSearchParam(params, "status", searchStatusInput.value);
+  appendSearchParam(params, "from", searchFromInput.value);
+  appendSearchParam(params, "to", searchToInput.value);
+  appendSearchParam(params, "limit", searchLimitInput.value);
+  params.set("page", String(page));
+
+  return params;
+}
+
+async function searchImages(page = searchPage) {
+  const params = buildSearchParams(page);
+  const response = await fetch(`/search?${params.toString()}`);
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "No se pudo completar la búsqueda.");
+  }
+
+  renderSearchResults(payload.items, payload.total, payload.page, payload.limit);
+  setSearchMessage("Búsqueda completada desde SQL.", "success");
 }
 
 async function createAnnotation(displayBox) {
@@ -730,6 +936,7 @@ form.addEventListener("submit", async (event) => {
     setStatus("Imagen cargada correctamente.", "success");
     input.value = "";
     await loadImages();
+    await loadDashboardMetrics();
     const uploadedImage = images.find((image) => image.id === payload.imageId);
 
     if (uploadedImage) {
@@ -743,9 +950,58 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  searchButton.disabled = true;
+
+  try {
+    await searchImages(1);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo completar la búsqueda.";
+    renderSearchResults([], 0, 1, Number(searchLimitInput.value) || 10);
+    setSearchMessage(message, "error");
+  } finally {
+    searchButton.disabled = false;
+  }
+});
+
+clearSearchButton.addEventListener("click", () => {
+  searchForm.reset();
+  searchLimitInput.value = "10";
+  renderSearchResults([], 0, 1, Number(searchLimitInput.value));
+  setSearchMessage("", "");
+});
+
+searchPrevButton.addEventListener("click", () => {
+  searchImages(searchPage - 1).catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudo completar la búsqueda.";
+    setSearchMessage(message, "error");
+  });
+});
+
+searchNextButton.addEventListener("click", () => {
+  searchImages(searchPage + 1).catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudo completar la búsqueda.";
+    setSearchMessage(message, "error");
+  });
+});
+
+refreshMetricsButton.addEventListener("click", () => {
+  loadDashboardMetrics().catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudieron cargar las métricas.";
+    setMetricsMessage(message, "error");
+  });
+});
+
 loadImages().catch((error) => {
   const message = error instanceof Error ? error.message : "No se pudieron cargar las imágenes.";
   setStatus(message, "error");
+});
+
+loadDashboardMetrics().catch((error) => {
+  const message = error instanceof Error ? error.message : "No se pudieron cargar las métricas.";
+  setMetricsMessage(message, "error");
 });
 
 loadCategories().catch((error) => {

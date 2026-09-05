@@ -25,6 +25,7 @@ input {
 }
 
 .upload-panel,
+.dashboard-panel,
 .category-panel,
 .annotation-panel,
 .viewer {
@@ -34,6 +35,7 @@ input {
   padding: 24px;
 }
 
+.dashboard-panel,
 .category-panel,
 .annotation-panel,
 .viewer {
@@ -191,6 +193,38 @@ button:disabled {
   padding: 4px 10px;
   text-align: center;
   font-weight: 700;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.metric-card {
+  min-height: 96px;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+  padding: 14px;
+  background: #f8fafc;
+}
+
+.metric-card span,
+.metric-card strong {
+  display: block;
+}
+
+.metric-card span {
+  color: #52616f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.metric-card strong {
+  margin-top: 8px;
+  color: #17202a;
+  font-size: 1.9rem;
 }
 
 .image-grid {

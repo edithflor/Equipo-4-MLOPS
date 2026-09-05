@@ -6,6 +6,9 @@ const button = document.querySelector("#upload-button");
 const statusMessage = document.querySelector("#status-message");
 const imageList = document.querySelector("#image-list");
 const imageCount = document.querySelector("#image-count");
+const metricsGrid = document.querySelector("#dashboard-metrics");
+const metricsMessage = document.querySelector("#metrics-message");
+const refreshMetricsButton = document.querySelector("#refresh-metrics-button");
 const categoryList = document.querySelector("#category-list");
 const categoryMessage = document.querySelector("#category-message");
 const selectedCategoryLabel = document.querySelector("#selected-category-label");
@@ -47,6 +50,11 @@ function setStatus(message, type) {
 function setCategoryMessage(message, type) {
   categoryMessage.textContent = message;
   categoryMessage.className = `status-message ${type}`;
+}
+
+function setMetricsMessage(message, type) {
+  metricsMessage.textContent = message;
+  metricsMessage.className = `status-message ${type}`;
 }
 
 function setAnnotationMessage(message, type) {
@@ -382,6 +390,26 @@ async function loadCategories() {
   }
 
   renderCategories(payload);
+}
+
+async function loadDashboardMetrics() {
+  const response = await fetch("/dashboard/metrics");
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || "No se pudieron cargar las métricas.");
+  }
+
+  for (const metric of metricsGrid.querySelectorAll("[data-metric-key]")) {
+    const key = metric.dataset.metricKey;
+    const value = metric.querySelector("[data-metric-value]");
+
+    if (value && Object.hasOwn(payload, key)) {
+      value.textContent = new Intl.NumberFormat("es-MX").format(payload[key]);
+    }
+  }
+
+  setMetricsMessage("Métricas actualizadas desde la base de datos.", "success");
 }
 
 async function createAnnotation(displayBox) {
@@ -730,6 +758,7 @@ form.addEventListener("submit", async (event) => {
     setStatus("Imagen cargada correctamente.", "success");
     input.value = "";
     await loadImages();
+    await loadDashboardMetrics();
     const uploadedImage = images.find((image) => image.id === payload.imageId);
 
     if (uploadedImage) {
@@ -743,9 +772,21 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+refreshMetricsButton.addEventListener("click", () => {
+  loadDashboardMetrics().catch((error) => {
+    const message = error instanceof Error ? error.message : "No se pudieron cargar las métricas.";
+    setMetricsMessage(message, "error");
+  });
+});
+
 loadImages().catch((error) => {
   const message = error instanceof Error ? error.message : "No se pudieron cargar las imágenes.";
   setStatus(message, "error");
+});
+
+loadDashboardMetrics().catch((error) => {
+  const message = error instanceof Error ? error.message : "No se pudieron cargar las métricas.";
+  setMetricsMessage(message, "error");
 });
 
 loadCategories().catch((error) => {

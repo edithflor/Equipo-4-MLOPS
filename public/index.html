@@ -23,6 +23,36 @@
         <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
       </section>
 
+      <section class="dashboard-panel" aria-labelledby="dashboard-title">
+        <div class="viewer-header">
+          <h2 id="dashboard-title">Métricas del dashboard</h2>
+          <button id="refresh-metrics-button" type="button">Actualizar</button>
+        </div>
+        <div id="dashboard-metrics" class="metrics-grid" aria-live="polite">
+          <article class="metric-card" data-metric-key="totalImages">
+            <span>Total imágenes</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="totalAnnotations">
+            <span>Total anotaciones</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="totalCategories">
+            <span>Total categorías</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="annotatedImages">
+            <span>Anotadas</span>
+            <strong data-metric-value>...</strong>
+          </article>
+          <article class="metric-card" data-metric-key="pendingImages">
+            <span>Pendientes</span>
+            <strong data-metric-value>...</strong>
+          </article>
+        </div>
+        <p id="metrics-message" class="status-message" role="status" aria-live="polite"></p>
+      </section>
+
       <section class="category-panel" aria-labelledby="category-title">
         <div class="viewer-header">
           <h2 id="category-title">Categoría para la caja</h2>
